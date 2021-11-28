@@ -13,24 +13,6 @@ const Settings = {
   iconfontUrl: '',
   theme: "light",
   hideCopyButton: false,
-  hideHintAlert: false
-  // "layout": "topmenu",
-  // "contentWidth": "Fixed",
-  // "theme": "light",
-  // "primaryColor": "#F5222D",
-  // "fixedHeader": false,
-  // "fixSiderbar": false,
-  // "hideHintAlert": false,
-  // "hideCopyButton": false
-  // {
-  //   "layout": "topmenu",
-  //   "contentWidth": "Fixed",
-  //   "theme": "light",
-  //   "primaryColor": "#F5222D",
-  //   "fixedHeader": false,
-  //   "fixSiderbar": false,
-  //   "hideHintAlert": false,
-  //   "hideCopyButton": false
-  // }
+  hideHintAlert: false  
 };
 export default Settings;
