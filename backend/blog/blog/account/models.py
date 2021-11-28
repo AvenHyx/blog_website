@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 
 class Category(models.Model):
@@ -10,14 +11,15 @@ class Category(models.Model):
         managed = True
 
 
-class User(models.Model):
+class User(AbstractUser):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=60)
-    password = models.CharField(max_length=20)
+    username = models.CharField(max_length=60,unique=True)
+    password = models.TextField(null=False)
     email = models.EmailField(null=True)
     phone = models.CharField(null=True, max_length=20)
-    avatar = models.URLField()
-    privilege = models.PositiveSmallIntegerField()
+    avatar = models.URLField(null=True)
+    privilege = models.PositiveSmallIntegerField(default=2)
+    USERNAME_FIELD = 'username'
 
     class Meta:
         managed = True

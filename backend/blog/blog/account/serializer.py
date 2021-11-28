@@ -8,12 +8,24 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'avatar', 'privilege', 'cn_privilege')
+        fields = ('id', 'username','password', 'avatar', 'is_superuser',
+                  'cn_privilege', 'email', 'phone','date_joined')
+        extra_kwargs = {
+            'password': {
+                'write_only': True
+            }
+        }
+
+    def create(self, validated_data):
+        user = User(**validated_data)
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
 
     def get_cn_privilege(self, obj):
-        if obj.privilege == 1:
+        if obj.is_superuser == 1:
             return '管理员'
-        elif obj.privilege == 2:
+        elif obj.is_superuser == 2:
             return '博主'
         else:
             return ''

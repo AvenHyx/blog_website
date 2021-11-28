@@ -128,11 +128,13 @@ USE_TZ = False
 STATIC_URL = '/static/'
 
 REST_FRAMEWORK = {
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend'
-    ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
-    'PAGE_SIZE': 10,
 }
+
+AUTH_USER_MODEL = 'account.user'
+
+AUTHENTICATION_BACKENDS = (
+    'account.views.MyCustomBackend',
+)
