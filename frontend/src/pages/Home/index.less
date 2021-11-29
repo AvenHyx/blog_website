@@ -1,8 +1,42 @@
 @import '~antd/lib/style/themes/default.less';
 
-.pre {
-  margin: 12px 0;
-  padding: 12px 20px;
-  background: @input-bg;
-  box-shadow: @card-shadow;
+.homeContainer {
+  display: flex;
+  height: 100%;
+  padding-right: 20px;
+  padding-left: 100px;
+
+  // &-aside {
+  //   width: 100px;
+  //   background-color: red;
+  // }
+  // &-right {
+  //   flex: 1;
+  //   background-color: yellow;
+  // }
+  .asideStyle {
+    padding: 16px 16px;
+    // max-height: 500px;
+    // height: 100%;
+    overflow-y: auto;
+    background-color: #fff;
+    &::-webkit-scrollbar {
+      display: none;
+      width: 0;
+    }
+    &.active {
+      .asideItem {
+        color: #fff;
+        background-color: #903eb0;
+      }
+    }
+  }
+  .asideItem {
+    height: 40px;
+    text-align: center;
+    cursor: pointer;
+    // &.active {
+    //   background-color: #903eb0;
+    // }
+  }
 }

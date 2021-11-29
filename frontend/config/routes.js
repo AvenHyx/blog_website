@@ -20,9 +20,23 @@ export default [
   },
   {
     path: '/home',
-    name: 'welcome',
-    icon: 'smile',
+    name: 'blog',
+    icon: 'snippets',
     component: './Home',
+  },
+  {
+    path: '/center',
+    name: "center",
+    icon: "solution",
+    component: "./Center",
+    // routes: [
+    //   {
+    //     path: './Center/setting',
+    //     name: "设置中心",
+    //     icon: "snippets",
+    //     component: "./Setting"
+    //   }
+    // ]
   },
   // {
   //   path: '/admin',
