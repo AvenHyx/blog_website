@@ -29,14 +29,13 @@ export default [
     name: "center",
     icon: "solution",
     component: "./Center",
-    // routes: [
-    //   {
-    //     path: './Center/setting',
-    //     name: "设置中心",
-    //     icon: "snippets",
-    //     component: "./Setting"
-    //   }
-    // ]
+  },
+  {
+    path: '/blogDetail',
+    name: "blogDetail",
+    icon: "snippets",
+    component: "./BlogDetail",
+    hideInMenu: true
   },
   // {
   //   path: '/admin',

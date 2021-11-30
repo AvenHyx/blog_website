@@ -1,10 +1,10 @@
 const Settings = {
   navTheme: 'light',
   // 拂晓蓝
-  primaryColor: '#903eb0',
+  primaryColor: '#0e5fc9',
   layout: 'topmenu',
   contentWidth: 'Fixed',
-  fixedHeader: false,
+  fixedHeader: true,
   fixSiderbar: true,
   colorWeak: false,
   title: '',

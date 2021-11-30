@@ -6,7 +6,7 @@ const Footer = () => {
   const intl = useIntl();
   const defaultMessage = intl.formatMessage({
     id: 'app.copyright.produced',
-    defaultMessage: 'Arya&dzp携手打造的个人博客网站',
+    defaultMessage: 'Arya&zdp携手打造的个人博客网站',
   });
   const currentYear = new Date().getFullYear();
   return (

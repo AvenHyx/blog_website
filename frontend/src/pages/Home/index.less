@@ -4,10 +4,40 @@
   display: flex;
   height: 100%;
   padding-right: 20px;
-  padding-left: 100px;
+  padding-left: 30px;
+  .antUpContent {
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    color: #fff;
+    text-align: center;
+    background-color: #0e5fc9;
+    border-radius: 20px;
+    transition: all 0.3s;
+  }
 
+  .antUpIcon {
+    font-size: 24px;
+    line-height: 40px;
+  }
+  .anticon {
+    display: inline-block;
+    color: inherit;
+    font-style: normal;
+    line-height: 0;
+    text-align: center;
+    text-transform: none;
+    vertical-align: -0.125em;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+  .anticonvt {
+  }
   .asideStyle {
-    // padding: 16px 16px;
+    position: fixed;
+    top: 72px;
+    left: 50px;
+    max-height: 85%;
     overflow-y: auto;
     background-color: #fff;
     &::-webkit-scrollbar {
@@ -17,13 +47,36 @@
   }
   .asideItem {
     padding: 8px;
-    // height: 40px;
-    // line-height: 40px;
     text-align: center;
+    background-color: rgba(#0e5fc9, 0);
     cursor: pointer;
+    &.active {
+      color: #fff;
+      background-color: rgba(#0e5fc9, 0.8);
+      opacity: 1;
+      transition: all 0.5s ease-in-out;
+    }
+    &:hover {
+      color: #fff;
+      background-color: rgba(#0e5fc9, 0.45);
+      opacity: 1;
+      transition: all 0.1s ease-in-out;
+    }
   }
-  .active {
-    color: #fff;
-    background-color: #903eb0;
+  .rightContent {
+    width: 90%;
+    margin-left: 125px;
+  }
+  .blogCenter {
+    width: 100%;
+    padding: 16px;
+    background-color: #fff;
+    // cursor: pointer;
+  }
+  .blogTitleStyle {
+    cursor: pointer;
+    &:hover {
+      color: #0e5fc9;
+    }
   }
 }
