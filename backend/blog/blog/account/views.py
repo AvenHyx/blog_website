@@ -1,32 +1,22 @@
 import uuid
 import qiniu
-from rest_framework import generics
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from django.contrib.auth.backends import ModelBackend
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from django.contrib.auth import get_user_model
-from django.views.decorators.csrf import csrf_exempt
-
 from qiniu import Auth
 
-from .models import Articles
-from .serializer import ArticleSerializer, UserSerializer
-
+from .serializer import UserSerializer
 
 User = get_user_model()
 
-
-class MyCustomBackend(ModelBackend):
-    def authenticate(self, request, username=None, password=None, **kwargs):
-        try:
-            user = User.objects.get(Q(username=username) | Q(email=username) |
-                                    Q(phone=username))
-            if user.check_password(password):
-                return user
-        except Exception as e:
-            return None
+AUTH = Auth('Ii7G8QcRCj3bsNquTxr2RegKImtlvI5_8QRt7Ca7',
+            'FYT9M2KChn_V3BJAWRnlkuFkbBqH4cThBuL8MtVh')
+BUCKET_NAME = 'zhou-pp'
+pre_url = 'http://img.aryazdp.cn/'
 
 
 @api_view(['POST'])
@@ -39,12 +29,6 @@ def register(request):
             return Response({'businessCode': 1000, 'content': True})
         return Response({'businessCode': 1001, 'content': False,
                          'message': serializer.errors})
-
-
-AUTH = Auth('Ii7G8QcRCj3bsNquTxr2RegKImtlvI5_8QRt7Ca7',
-            'FYT9M2KChn_V3BJAWRnlkuFkbBqH4cThBuL8MtVh')
-BUCKET_NAME = 'zhou-pp'
-pre_url = 'http://img.aryazdp.cn/'
 
 
 @api_view(['POST'])
@@ -62,11 +46,34 @@ def upload(request):
         return Response({"businessCode": 1001, "content": info.exception})
 
 
-class ArticleList(generics.ListCreateAPIView):
-    queryset = Articles.objects.all()
-    serializer_class = ArticleSerializer
+@api_view(['POST'])
+def login(request):
+    try:
+        username = request.data['username']
+        password = request.data['password']
+        user = User.objects.get(Q(username=username) | Q(email=username) |
+                                Q(phone=username))
+        if user.check_password(password):
+            return Response({"businessCode": 1000, "content": True})
+        else:
+            return Response({"businessCode": 1001, "content": False, "msg": "用户名或密码错误"})
+    except Exception as e:
+        return Response({"businessCode": 1001, "content": False, "msg": e})
 
 
-class ArticleDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Articles.objects.all()
-    serializer_class = ArticleSerializer
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+def logout(request):
+    try:
+        token = RefreshToken(request.data.get('refresh'))
+        token.blacklist()
+        return Response({"businessCode": 1000, "content": True})
+    except Exception as e:
+        return Response({"businessCode": 1001, "content": False})
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+def test(request):
+    print(request.auth,'===========')
+    return Response({"businessCode": 1000, "content": True})
