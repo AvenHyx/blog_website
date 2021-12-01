@@ -1,7 +1,8 @@
 import uuid
 import qiniu
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from .permission import IsOwnerOfCommentOrArticle
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.views.decorators.csrf import csrf_exempt
@@ -9,7 +10,8 @@ from django.db.models import Q
 from django.contrib.auth import get_user_model
 from qiniu import Auth
 
-from .serializer import UserSerializer
+from .serializer import UserSerializer, CategorySerializer
+from .models import Category
 
 User = get_user_model()
 
@@ -73,7 +75,45 @@ def logout(request):
 
 
 @api_view(['POST'])
-@permission_classes((IsAuthenticated,))
-def test(request):
-    print(request.auth,'===========')
-    return Response({"businessCode": 1000, "content": True})
+@permission_classes((IsAdminUser, ))
+def add_tag(request):
+    name = request.data['tagName']
+    serializer = CategorySerializer(data={"name": name})
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'businessCode': 1000, 'content': True})
+    return Response({'businessCode': 1001, 'content': False, 'msg': serializer.errors})
+
+
+@api_view(['POST'])
+@permission_classes((IsAdminUser, ))
+def modify_tag(request):
+    try:
+        tag = Category.objects.get(pk=request.data['tagId'])
+    except Exception:
+        return Response({'businessCode': 1001, 'content': False, 'msg': 'not exist'})
+    name = request.data['tagName']
+    serializer = CategorySerializer(tag, data={"name": name})
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'businessCode': 1000, 'content': True})
+    return Response({'businessCode': 1001, 'content': False, 'msg': serializer.errors})
+
+
+@api_view(['POST'])
+@permission_classes((IsAdminUser, ))
+def delete_tag_by_id(request):
+    try:
+        tag = Category.objects.get(pk=request.data['tagId'])
+    except Exception:
+        return Response({'businessCode': 1001, 'content': False, 'msg': 'not exist'})
+    tag.delete()
+    return Response({'businessCode': 1000, 'content': True})
+
+
+@api_view(['GET'])
+def get_category_menu(request):
+    try:
+        Category.objects.all()
+    except Exception:
+        return Response({'businessCode': 1001, 'content': False})
