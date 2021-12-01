@@ -1,7 +1,6 @@
 # by zhou_pp
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Articles, User
+from .models import Articles, User, Category, Comments
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -10,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username','password', 'avatar', 'is_superuser',
-                  'cn_privilege', 'email', 'phone','date_joined')
+                  'cn_privilege', 'email', 'phone','date_joined', 'is_staff')
         extra_kwargs = {
             'password': {
                 'write_only': True
@@ -24,20 +23,18 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def get_cn_privilege(self, obj):
-        if obj.is_superuser == 1:
+        if obj.is_staff == 1:
             return '管理员'
-        elif obj.is_superuser == 2:
+        elif obj.is_staff == 0:
             return '博主'
         else:
             return ''
 
 
-class ArticleSerializer(serializers.ModelSerializer):
-    userId = UserSerializer()
+class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Articles
+        model = Category
         fields = '__all__'
-        read_only_fields = ('id', 'time')
 
 
