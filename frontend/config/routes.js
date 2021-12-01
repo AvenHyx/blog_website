@@ -28,7 +28,7 @@ export default [
     path: '/center',
     name: "center",
     icon: "solution",
-    component: "./Center",
+    component: "./Personal/account/center",
   },
   {
     path: '/blogDetail',
