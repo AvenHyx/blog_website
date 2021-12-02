@@ -5,6 +5,7 @@ export default {
   'menu.blog': "博文流",
   'menu.center': "个人中心",
   'menu.blogDetail': "博客详情",
+  'menu.setting': "设置中心",
   'menu.admin': '管理页',
   'menu.admin.sub-page': '二级管理页',
   'menu.login': '登录',

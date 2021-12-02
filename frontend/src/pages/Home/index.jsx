@@ -2,11 +2,11 @@ import React, {
     useEffect, useState
 } from 'react'
 import { useHistory } from 'react-router-dom'
-import { Tag } from 'antd'
+import { Tag, BackTop, Button } from 'antd'
 import styles from './index.less'
 import { categoryList } from './data'
 import { List, Avatar, Space } from 'antd';
-import { MessageOutlined, LikeOutlined, StarOutlined } from '@ant-design/icons';
+import { MessageOutlined, LikeOutlined, StarOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
 import cls from 'classnames'
 export default () => {
     const history = useHistory()
@@ -30,6 +30,9 @@ export default () => {
     }
 
     return <div className={homeContainer}>
+        <BackTop>
+            <Button type="primary" shape="circle" icon={<VerticalAlignTopOutlined />} size={'large'} />
+        </BackTop>
         <div className={asideStyle}>
             {
                 categoryList.map((_item, _index) => {

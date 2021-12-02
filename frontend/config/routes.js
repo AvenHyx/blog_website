@@ -31,6 +31,12 @@ export default [
     component: "./Personal/account/center",
   },
   {
+    path: '/setting',
+    name: "setting",
+    icon: "setting",
+    component: "./Personal/account/settings"
+  },
+  {
     path: '/blogDetail',
     name: "blogDetail",
     icon: "snippets",
