@@ -1,3 +1,4 @@
+import json
 import uuid
 import qiniu
 from rest_framework.decorators import api_view, permission_classes
@@ -49,6 +50,7 @@ def upload(request):
 
 
 @api_view(['POST'])
+@permission_classes((AllowAny,))
 def login(request):
     try:
         username = request.data['username']
@@ -112,8 +114,22 @@ def delete_tag_by_id(request):
 
 
 @api_view(['GET'])
+@permission_classes((AllowAny,))
+def get_tags(request):
+    try:
+        tag_list = Category.objects.all()
+        serializer = CategorySerializer(tag_list, many=True)
+    except Exception:
+        return Response({'businessCode': 1001, 'content': False, 'msg': 'not exist'})
+    return Response({'businessCode': 1000, 'content': serializer.data})
+
+
+@api_view(['GET'])
+@permission_classes((AllowAny,))
 def get_category_menu(request):
     try:
-        Category.objects.all()
+        pass
     except Exception:
         return Response({'businessCode': 1001, 'content': False})
+
+
