@@ -47,7 +47,7 @@ class Comments(models.Model):
     articleId = models.ForeignKey(Articles, on_delete=models.CASCADE)
     content = models.CharField(max_length=500)
     replyUserId = models.IntegerField()
-    replyUserName = models.CharField(max_length=100)
+    replyUserName = models.CharField(max_length=100, default='未知用户')
 
     class Meta:
         managed = True

@@ -332,15 +332,6 @@ def cancel_fork(request):
 
 @api_view(['GET'])
 @permission_classes((AllowAny,))
-def get_category_menu(request):
-    try:
-        pass
-    except Exception:
-        return Response({'businessCode': 1001, 'content': False})
-
-
-@api_view(['GET'])
-@permission_classes((AllowAny,))
 def get_blog_detail(request):
     try:
         blog_id = request.data['blogId']
@@ -377,6 +368,186 @@ def get_blog_detail(request):
         return Response({'businessCode': 1001, 'content': False, 'msg': 'not exist'})
 
 
-# @api_view(['GET'])
-# @permission_classes((IsAuthenticated,))
-# def get_user_info(request):
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+def get_user_info(request):
+    try:
+        token = str(request.auth)
+        user_id = get_userid_from_token(token)
+        user = User.objects.get(id=user_id)
+    except Exception:
+        return Response({'businessCode': 1001, 'content': False, 'msg': 'not exist'})
+    serializer = UserSerializer(user)
+    content = {
+        "username": serializer.data['username'],
+        "email": serializer.data['email'],
+        "mobile": serializer.data['phone'],
+        "avatar": serializer.data['avatar'],
+        "role": serializer.data['role']
+    }
+    return Response({'businessCode': 1000, 'content': content})
+
+
+@api_view(['GET'])
+@permission_classes((AllowAny,))
+def get_category_menu(request):
+    try:
+        tags = Category.objects.all()
+        tag_list = CategorySerializer(tags, many=True)
+        content = []
+        for tag in tag_list.data:
+            articles = Articles.objects.filter(category=tag['id'])
+            article_list = ArticleSerializer(articles, many=True)
+            article_item = []
+            for article in article_list.data:
+                comment_amount = Comments.objects.filter(articleId=article['id']).count()
+                user = User.objects.get(id=article['userId'])
+                user_serializer = UserSerializer(user)
+                avatar = user_serializer.data['avatar']
+                article_item.append({
+                    'blogTitle': article['title'],
+                    'blogContent': article['content'],
+                    'blogId': article['id'],
+                    'commentAmount': comment_amount,
+                    'createTime': article['time'],
+                    'avatar': avatar
+                })
+            content.append({
+                'tagName': tag['name'],
+                'blogList': article_item,
+                'tagId': tag['id']
+            })
+        return Response({'businessCode': 1000, 'content': content})
+    except Exception as e:
+        return Response({'businessCode': 1001, 'content': False, 'msg': str(e)})
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+def get_personal_center(request):
+    try:
+        token = str(request.auth)
+        user_id = get_userid_from_token(token)
+        articles = Articles.objects.filter(userId=user_id)
+        article_list = ArticleSerializer(articles, many=True)
+        blog_list = []
+        for article in article_list.data:
+            comment_amount = Comments.objects.filter(articleId=article['id']).count()
+            user = User.objects.get(id=article['userId'])
+            user_serializer = UserSerializer(user)
+            avatar = user_serializer.data['avatar']
+            blog_list.append({
+                'blogTitle': article['title'],
+                'blogContent': article['content'],
+                'blogId': article['id'],
+                'commentAmount': comment_amount,
+                'createTime': article['time'],
+                'avatar': avatar
+            })
+
+        # forkList
+        forks = Follow.objects.filter(followerId=user_id)
+        forks_ids = FollowSerializer(forks, many=True).data
+
+        def get_fork_list(item):
+            id = item['followedId']
+            user = User.objects.get(id=id)
+            user_serializer = UserSerializer(user).data
+            isForked = Follow.objects.filter(followerId=user_id).filter(followedId=id).count()>0
+            return {
+                'username': user_serializer['username'],
+                'avatar': user_serializer['avatar'],
+                'isForked': isForked,
+                'userId': user_serializer['id']
+            }
+        fork_list = map(get_fork_list, forks_ids)
+
+        # followerList
+        followers = Follow.objects.filter(followedId=user_id)
+        followers_ids = FollowSerializer(followers, many=True).data
+
+        def get_follower_list(item):
+            id = item['followerId']
+            user = User.objects.get(id=id)
+            user_serializer = UserSerializer(user).data
+            isForked = Follow.objects.filter(followedId=user_id).filter(followerId=id).count() > 0
+            return {
+                'username': user_serializer['username'],
+                'avatar': user_serializer['avatar'],
+                'isForked': isForked,
+                'userId': user_serializer['id']
+            }
+
+        follower_list = map(get_follower_list, followers_ids)
+
+        # asideMenu
+        user = User.objects.get(id=user_id)
+        user_serializer = UserSerializer(user).data
+        is_manager = user_serializer['is_staff']
+        aside_menu = [
+            {"menuName": '个人中心', "menuId": 1, "menuType": 'center'},
+            {"menuName": '设置中心', "menuId": 2, "menuType": 'settings'}
+        ]
+        if is_manager:
+            aside_menu.append({"menuName": '管理中心', "menuId": 3, "menuType": 'admin'})
+
+        # createTime
+        createTime = user_serializer['date_joined']
+
+        return Response({'businessCode': 1000, 'content': {
+            "myBlogList": blog_list,
+            "forkList": fork_list,
+            "followerList": follower_list,
+            "asideMenu": aside_menu,
+            "createTime": createTime
+        }})
+    except Exception as e:
+        return Response({'businessCode': 1001, 'content': False, 'msg': str(e)})
+
+
+@api_view(['GET'])
+@permission_classes((AllowAny,))
+def get_other_info(request):
+    try:
+        user_id = request.query_params['userId']
+
+        # blogList
+        articles = Articles.objects.filter(userId=user_id)
+        article_list = ArticleSerializer(articles, many=True)
+        blog_list = []
+        for article in article_list.data:
+            comment_amount = Comments.objects.filter(articleId=article['id']).count()
+            user = User.objects.get(id=article['userId'])
+            user_serializer = UserSerializer(user)
+            avatar = user_serializer.data['avatar']
+            blog_list.append({
+                'blogTitle': article['title'],
+                'blogContent': article['content'],
+                'blogId': article['id'],
+                'commentAmount': comment_amount,
+                'createTime': article['time'],
+                'avatar': avatar
+            })
+
+        # userInfo
+        user = User.objects.get(id=user_id)
+        user_serializer = UserSerializer(user).data
+        username = user_serializer['username']
+        avatar = user_serializer['avatar']
+        create_time = user_serializer['date_joined']
+        fork_number = Follow.objects.filter(followerId=user_id).count()
+        follower_number = Follow.objects.filter(followedId=user_id).count()
+        user_info = {
+            "username": username,
+            "avatar": avatar,
+            "createTime": create_time,
+            "forkNumber": fork_number,
+            "followerNumber": follower_number,
+        }
+
+        return Response({'businessCode': 1000, 'content': {
+            "myBlogList": blog_list,
+            "userInfo": user_info
+        }})
+    except Exception as e:
+        return Response({'businessCode': 1001, 'content': False, 'msg': str(e)})
