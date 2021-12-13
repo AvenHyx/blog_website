@@ -10,6 +10,24 @@ export default [
             name: 'login',
             path: '/user/login',
             component: './user/Login',
+            exact: true
+          },
+          {
+            path: "/user",
+            redirect: "/user/login",
+            exact: true
+          },
+          {
+            name: 'register',
+            path: '/user/register',
+            component: './user/Register',
+            exact: true
+          },
+          {
+            name: 'register-result',
+            path: '/user/register-result',
+            component: './user/Register-result',
+            exact: true
           },
         ],
       },
@@ -18,6 +36,11 @@ export default [
       },
     ],
   },
+
+
+
+
+
   {
     path: '/home',
     name: 'blog',

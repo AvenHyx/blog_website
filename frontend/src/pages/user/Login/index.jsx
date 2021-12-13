@@ -14,7 +14,7 @@ import Footer from '@/components/Footer';
 import { login } from '@/services/ant-design-pro/api';
 import { getFakeCaptcha } from '@/services/ant-design-pro/login';
 import styles from './index.less';
-
+const logo = "http://img.aryazdp.cn/e698a23c511911ecbb94b46bfc50fb17"
 const LoginMessage = ({ content }) => (
   <Alert
     style={{
@@ -32,26 +32,31 @@ const Login = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
   const intl = useIntl();
 
-  const fetchUserInfo = async () => {
-    const userInfo = await initialState?.fetchUserInfo?.();
-
+  const fetchUserInfo = async (values) => {
+    const userInfo = await initialState?.fetchUserInfo?.(values);
     if (userInfo) {
+
       await setInitialState((s) => ({ ...s, currentUser: userInfo }));
     }
   };
+
+
 
   const handleSubmit = async (values) => {
     try {
       // 登录
       const msg = await login({ ...values, type });
 
-      if (msg.status === 'ok') {
+      if (msg?.content) {
         const defaultLoginSuccessMessage = intl.formatMessage({
           id: 'pages.login.success',
           defaultMessage: '登录成功！',
         });
+
+
+        await fetchUserInfo(values);
+
         message.success(defaultLoginSuccessMessage);
-        await fetchUserInfo();
         /** 此方法会跳转到 redirect 参数所在的位置 */
 
         if (!history) return;
@@ -65,6 +70,7 @@ const Login = () => {
 
       setUserLoginState(msg);
     } catch (error) {
+      console.log(error, ">>>error")
       const defaultLoginFailureMessage = intl.formatMessage({
         id: 'pages.login.failure',
         defaultMessage: '登录失败，请重试！',
@@ -73,19 +79,26 @@ const Login = () => {
     }
   };
 
+  /**
+   * 注册账户
+   */
+  const registerAccount = () => {
+    history.push('/user/register')
+  }
+
   const { status, type: loginType } = userLoginState;
   return (
     <div className={styles.container}>
       <div className={styles.lang} data-lang>
-        {SelectLang && <SelectLang />}
+        {/* {SelectLang && <SelectLang />} */}
       </div>
       <div className={styles.content}>
         <LoginForm
-          logo={<img alt="logo" src="/logo.svg" />}
-          title="Ant Design"
-          subTitle={intl.formatMessage({
-            id: 'pages.layouts.userLayout.title',
-          })}
+          logo={<img alt="logo" src={logo} />}
+          title="  博客"
+          // subTitle={intl.formatMessage({
+          //   id: 'pages.layouts.userLayout.title',
+          // })}
           initialValues={{
             autoLogin: true,
           }}
@@ -100,6 +113,7 @@ const Login = () => {
             <WeiboCircleOutlined key="WeiboCircleOutlined" className={styles.icon} />,
           ]}
           onFinish={async (values) => {
+            // setUserForm(values)
             await handleSubmit(values);
           }}
         >
@@ -274,13 +288,14 @@ const Login = () => {
               style={{
                 float: 'right',
               }}
+              onClick={registerAccount}
             >
-              <FormattedMessage id="pages.login.forgotPassword" defaultMessage="忘记密码" />
+              <FormattedMessage id="pages.login.registerAccount" defaultMessage="注册账户" />
             </a>
           </div>
         </LoginForm>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };
