@@ -88,18 +88,19 @@ const Settings = () => {
           }
         }}
       >
-        <div className={styles.leftMenu}>
-          <Menu
-            mode={initConfig.mode}
-            selectedKeys={[initConfig.selectKey]}
-            onClick={({ key }) => {
-              setInitConfig({ ...initConfig, selectKey: key });
-            }}
-          >
-            {getMenu()}
-          </Menu>
-        </div>
+
         <div className={styles.right}>
+          <div className={styles.leftMenu}>
+            <Menu
+              mode={initConfig.mode}
+              selectedKeys={[initConfig.selectKey]}
+              onClick={({ key }) => {
+                setInitConfig({ ...initConfig, selectKey: key });
+              }}
+            >
+              {getMenu()}
+            </Menu>
+          </div>
           <div className={styles.title}>{menuMap[initConfig.selectKey]}</div>
           {renderChildren()}
         </div>

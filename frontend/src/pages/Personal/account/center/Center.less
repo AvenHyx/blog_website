@@ -19,7 +19,8 @@
   }
 }
 
-.detail {
+.detail,
+.tabStyle {
   p {
     position: relative;
     margin-bottom: 8px;
@@ -36,6 +37,23 @@
     left: 0;
     width: 14px;
     height: 14px;
+  }
+}
+.tabStyle {
+  padding: 6px 0;
+  p {
+    height: 44px;
+    margin-bottom: 0;
+    padding-left: 48px;
+    font-size: 16px;
+    line-height: 44px;
+    cursor: pointer;
+    &.active {
+      color: #fff;
+      background-color: rgba(#0e5fc9, 0.8);
+      opacity: 1;
+      transition: all 0.5s ease-in-out;
+    }
   }
 }
 
@@ -55,6 +73,8 @@
 }
 
 .team {
+  // padding: 8px 0;
+  background-color: #fff;
   :global {
     .ant-avatar {
       margin-right: 12px;

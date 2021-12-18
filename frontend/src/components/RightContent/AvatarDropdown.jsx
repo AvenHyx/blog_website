@@ -1,43 +1,59 @@
 import React, { useCallback } from 'react';
-import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
-import { Avatar, Menu, Spin } from 'antd';
+import { LogoutOutlined, SettingOutlined, SolutionOutlined } from '@ant-design/icons';
+import { Avatar, Menu, Spin, notification } from 'antd';
 import { history, useModel } from 'umi';
 import { stringify } from 'querystring';
 import HeaderDropdown from '../HeaderDropdown';
 import styles from './index.less';
-import { outLogin } from '@/services/ant-design-pro/api';
+import * as apis from '@/services/ant-design-pro/api';
 
 /**
  * 退出登录，并且将当前的 url 保存
  */
 const loginOut = async () => {
-  await outLogin();
-  const { query = {}, search, pathname } = history.location;
-  const { redirect } = query; // Note: There may be security issues, please note
 
-  if (window.location.pathname !== '/user/login' && !redirect) {
-    history.replace({
-      pathname: '/user/login',
-      search: stringify({
-        redirect: pathname + search,
-      }),
+
+  try {
+    let res = await apis.outLogin();
+    if (res?.businessCode * 1 == 1000) {
+      const { query = {}, search, pathname } = history.location;
+      const { redirect } = query; // Note: There may be security issues, please note
+      localStorage.setItem("access-token", "")
+      localStorage.setItem("refresh-token", "")
+
+      if (window.location.pathname !== '/user/login' && !redirect) {
+        history.replace({
+          pathname: '/user/login',
+          search: stringify({
+            redirect: pathname + search,
+          }),
+        });
+      }
+    } else {
+      notification.error({
+        message: `网络错误 退出失败`,
+      });
+    }
+  } catch (error) {
+    notification.error({
+      message: `网络错误 退出失败`,
     });
   }
+
 };
 
 const AvatarDropdown = ({ menu }) => {
+  console.log(menu, ">>>>menu")
   const { initialState, setInitialState } = useModel('@@initialState');
   const onMenuClick = useCallback(
     (event) => {
       const { key } = event;
-
       if (key === 'logout') {
         setInitialState((s) => ({ ...s, currentUser: undefined }));
         loginOut();
         return;
       }
-
-      history.push(`/account/${key}`);
+      history.push(`/${key}`);
     },
     [setInitialState],
   );
@@ -59,7 +75,7 @@ const AvatarDropdown = ({ menu }) => {
 
   const { currentUser } = initialState;
 
-  if (!currentUser || !currentUser.name) {
+  if (!currentUser || !currentUser.username) {
     return loading;
   }
 
@@ -67,16 +83,16 @@ const AvatarDropdown = ({ menu }) => {
     <Menu className={styles.menu} selectedKeys={[]} onClick={onMenuClick}>
       {menu && (
         <Menu.Item key="center">
-          <UserOutlined />
+          <SolutionOutlined />
           个人中心
         </Menu.Item>
       )}
-      {menu && (
+      {/* {menu && (
         <Menu.Item key="settings">
           <SettingOutlined />
           个人设置
         </Menu.Item>
-      )}
+      )} */}
       {menu && <Menu.Divider />}
 
       <Menu.Item key="logout">
@@ -85,11 +101,13 @@ const AvatarDropdown = ({ menu }) => {
       </Menu.Item>
     </Menu>
   );
+
+  console.log(currentUser.username, ">>>>currentUser.username")
   return (
     <HeaderDropdown overlay={menuHeaderDropdown}>
       <span className={`${styles.action} ${styles.account}`}>
         <Avatar size="small" className={styles.avatar} src={currentUser.avatar} alt="avatar" />
-        <span className={`${styles.name} anticon`}>{currentUser.name}</span>
+        <span className={`${styles.name} anticon`}>{currentUser.username}</span>
       </span>
     </HeaderDropdown>
   );

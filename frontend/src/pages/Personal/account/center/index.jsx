@@ -1,12 +1,95 @@
-import { PlusOutlined, HomeOutlined, ContactsOutlined, ClusterOutlined } from '@ant-design/icons';
+import { ProfileOutlined, SettingOutlined, UserOutlined, PlusOutlined, HomeOutlined, ContactsOutlined, ClusterOutlined } from '@ant-design/icons';
 import { Avatar, Card, Col, Divider, Input, Row, Tag } from 'antd';
 import React, { useState, useRef } from 'react';
 import { GridContent } from '@ant-design/pro-layout';
-import { Link, useRequest } from 'umi';
+import { Link, useRequest, history } from 'umi';
 // import Projects from './components/Projects';
 import Articles from './components/Articles';
 import { queryCurrent } from './service';
 import styles from './Center.less';
+import cls from 'classnames'
+import Settings from './components/Settings'
+import Admin from './components/Admin'
+
+const currentUser = {
+  name: 'Serati Ma',
+  avatar: 'https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png',
+  userid: '00000001',
+  email: 'antdesign@alipay.com',
+  signature: '海纳百川，有容乃大',
+  title: '交互专家',
+  group: '蚂蚁金服－某某某事业群－某某平台部－某某技术部－UED',
+  tags: [
+    {
+      key: '0',
+      label: '很有想法的',
+    },
+    {
+      key: '1',
+      label: '专注设计',
+    },
+    {
+      key: '2',
+      label: '辣~',
+    },
+    {
+      key: '3',
+      label: '大长腿',
+    },
+    {
+      key: '4',
+      label: '川妹子',
+    },
+    {
+      key: '5',
+      label: '海纳百川',
+    },
+  ],
+  notifyCount: 12,
+  unreadCount: 11,
+  country: 'China',
+  // access: getAccess(),
+  geographic: {
+    province: {
+      label: '浙江省',
+      key: '330000',
+    },
+    city: {
+      label: '杭州市',
+      key: '330100',
+    },
+  },
+  address: '西湖区工专路 77 号',
+  phone: '0752-268888888',
+}
+
+
+const menuList = [
+  {
+    menuId: 0,
+    menuType: "blog",
+    menuName: "博客中心"
+  },
+  {
+    menuId: 1,
+    menuType: "settings",
+    menuName: "设置中心"
+  },
+  {
+    menuId: 2,
+    menuType: "admin",
+    menuName: "管理中心"
+  }
+]
+
+const IconMap = {
+  "blog": <ProfileOutlined />,
+  "settings": <SettingOutlined />,
+  "admin": <UserOutlined />
+}
+
+
+const loading = false;
 const operationTabList = [
   {
     key: 'articles',
@@ -55,83 +138,13 @@ const operationTabList = [
   // },
 ];
 
-const TagList = ({ tags }) => {
-  const ref = useRef(null);
-  const [newTags, setNewTags] = useState([]);
-  const [inputVisible, setInputVisible] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-
-  const showInput = () => {
-    setInputVisible(true);
-
-    if (ref.current) {
-      // eslint-disable-next-line no-unused-expressions
-      ref.current?.focus();
-    }
-  };
-
-  const handleInputChange = (e) => {
-    setInputValue(e.target.value);
-  };
-
-  const handleInputConfirm = () => {
-    let tempsTags = [...newTags];
-
-    if (inputValue && tempsTags.filter((tag) => tag.label === inputValue).length === 0) {
-      tempsTags = [
-        ...tempsTags,
-        {
-          key: `new-${tempsTags.length}`,
-          label: inputValue,
-        },
-      ];
-    }
-
-    setNewTags(tempsTags);
-    setInputVisible(false);
-    setInputValue('');
-  };
-
-  return (
-    <div className={styles.tags}>
-      <div className={styles.tagsTitle}>标签</div>
-      {(tags || []).concat(newTags).map((item) => (
-        <Tag key={item.key}>{item.label}</Tag>
-      ))}
-      {inputVisible && (
-        <Input
-          ref={ref}
-          type="text"
-          size="small"
-          style={{
-            width: 78,
-          }}
-          value={inputValue}
-          onChange={handleInputChange}
-          onBlur={handleInputConfirm}
-          onPressEnter={handleInputConfirm}
-        />
-      )}
-      {!inputVisible && (
-        <Tag
-          onClick={showInput}
-          style={{
-            borderStyle: 'dashed',
-          }}
-        >
-          <PlusOutlined />
-        </Tag>
-      )}
-    </div>
-  );
-};
 
 const Center = () => {
   const [tabKey, setTabKey] = useState('articles'); //  获取用户信息
-
-  const { data: currentUser, loading } = useRequest(() => {
-    return queryCurrent();
-  }); //  渲染用户信息
+  const [current, setCurrent] = useState(0) //当前高亮的tab
+  // const { data: currentUser, loading } = useRequest(() => {
+  //   return queryCurrent();
+  // }); //  渲染用户信息
 
   const renderUserInfo = ({ title, group, geographic }) => {
     return (
@@ -181,6 +194,59 @@ const Center = () => {
     );
   }; // 渲染tab切换
 
+
+  //切换tab
+  const clickToUrl = (_index, _item) => {
+    let { menuType } = _item
+    setCurrent(_index)
+    switch (menuType) {
+      case "blog":
+        return renderBlog()
+      case "settings":
+        // history.push('/setting')
+        return <><Settings /></>
+
+      default:
+        break
+    }
+  }
+
+  /**博客 */
+  const renderBlog = () => {
+    return <Card
+      className={styles.tabsCard}
+      bordered={false}
+      tabList={operationTabList}
+      activeTabKey={tabKey}
+      onTabChange={(_tabKey) => {
+        setTabKey(_tabKey);
+      }}
+    >
+      {renderChildrenByTabKey(tabKey)}
+    </Card>
+  }
+
+  const renderTabs = () => {
+    const { active } = styles
+    return (
+      <div className={styles.tabStyle}>
+        {menuList.map((_item, _index) => {
+          let { menuId, menuName, menuType } = _item
+          return (
+            <p onClick={() => {
+              clickToUrl(_index, _item)
+            }} key={menuId} className={cls(current == _index ? active : null)}>
+              {IconMap[menuType]}
+              <span style={{
+                marginLeft: 8,
+              }}>{menuName}</span>
+            </p>
+          )
+        })}
+
+      </div>
+    );
+  }
   const renderChildrenByTabKey = (tabValue) => {
     if (tabValue === 'projects') {
       return <Projects />;
@@ -191,6 +257,7 @@ const Center = () => {
     }
 
     if (tabValue === 'articles') {
+
       return <Articles />;
     }
 
@@ -216,46 +283,33 @@ const Center = () => {
                   <div>{currentUser?.signature}</div>
                 </div>
                 {renderUserInfo(currentUser)}
-                <Divider dashed />
-                <TagList tags={currentUser.tags || []} />
-                <Divider
+                {/* <Divider dashed /> */}
+                {/* <TagList tags={currentUser.tags || []} /> */}
+                {/* <Divider
                   style={{
                     marginTop: 16,
                   }}
                   dashed
-                />
-                <div className={styles.team}>
-                  <div className={styles.teamTitle}>团队</div>
-                  <Row gutter={36}>
-                    {currentUser.notice &&
-                      currentUser.notice.map((item) => (
-                        <Col key={item.id} lg={24} xl={12}>
-                          <Link to={item.href}>
-                            <Avatar size="small" src={item.logo} />
-                            {item.member}
-                          </Link>
-                        </Col>
-                      ))}
-                  </Row>
-                </div>
+                /> */}
+
+
               </div>
             )}
           </Card>
+          <div className={styles.team}>
+            {/* <Card> */}
+            {renderTabs()}
+            {/* </Card> */}
+          </div>
+
         </Col>
         <Col lg={17} md={24}>
-          <Card
-            className={styles.tabsCard}
-            bordered={false}
-            tabList={operationTabList}
-            activeTabKey={tabKey}
-            onTabChange={(_tabKey) => {
-              setTabKey(_tabKey);
-            }}
-          >
-            {renderChildrenByTabKey(tabKey)}
-          </Card>
+          {current == 0 && renderBlog()}
+          {current == 1 && <Settings />}
+          {current == 2 && <Admin />}
         </Col>
       </Row>
+
     </GridContent>
   );
 };

@@ -52,13 +52,21 @@ export default [
     name: "center",
     icon: "solution",
     component: "./Personal/account/center",
+    hideInMenu: true
   },
   {
-    path: '/setting',
-    name: "setting",
-    icon: "setting",
-    component: "./Personal/account/settings"
+    path: '/blog-edit',
+    name: "blog-edit",
+    icon: "snippets",
+    component: "./Personal/EditBlog",
+    hideInMenu: true
   },
+  // {
+  //   path: '/setting',
+  //   name: "setting",
+  //   icon: "setting",
+  //   component: "./Personal/account/settings"
+  // },
   {
     path: '/blogDetail',
     name: "blogDetail",
