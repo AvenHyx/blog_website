@@ -8,9 +8,22 @@ import { categoryList } from './data'
 import { List, Avatar, Space } from 'antd';
 import { MessageOutlined, LikeOutlined, StarOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
 import cls from 'classnames'
+import * as apis from '@/services/ant-design-pro/api'
+
+
 export default () => {
-    const history = useHistory()
-    const [currentIndex, setCurrentIndex] = useState(0)
+    const history = useHistory();
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [categoryList, setCategoryList] = useState([]);
+
+    /**首页获取分类信息 */
+    useEffect(async () => {
+        let res = await apis.getCategoryMenu()
+        if (res && res?.businessCode * 1 == 1000) {
+            setCategoryList(res.content)
+        }
+    }, [])
+
     const {
         homeContainer,
         rightContent,
@@ -18,15 +31,19 @@ export default () => {
         asideItem,
         active,
         blogCenter,
-        blogTitleStyle
+        blogTitleStyle,
+        twoWrapStyle
     } = styles
+
+
+
 
     const handleTagClick = (index) => {
         setCurrentIndex(index)
     }
 
     const handleClickBlogDetail = (item) => {
-        history.push('/blogDetail')
+        history.push(`/blogDetail?blogId=${item.blogId}`)
     }
 
     return <div className={homeContainer}>
@@ -43,36 +60,43 @@ export default () => {
         </div>
         <div className={rightContent}>
             <div className={blogCenter}>
-                <List
-                    itemLayout="vertical"
-                    size="large"
+                {
+                    categoryList.length ?
+                        <List
+                            itemLayout="vertical"
+                            size="large"
+                            dataSource={categoryList[currentIndex].blogList || []}
+                            footer={null}
+                            renderItem={(item, index) => (
+                                <List.Item
+                                    key={index}
+                                    actions={[]}
+                                    extra={
+                                        <> <img
+                                            width={120}
+                                            alt="logo"
+                                            src="https://gw.alipayobjects.com/zos/rmsportal/mqaQswcyDLcXyDKnZfES.png"
+                                        />
+                                            {/* <div style={{ marginTop: 20, color: "#00000073" }}>{item.createTime}</div> */}
+                                        </>
+                                    }
+                                >
+                                    <List.Item.Meta
+                                        avatar={<Avatar src={item.avatar} />}
+                                        title={<div className={blogTitleStyle} onClick={() => {
+                                            handleClickBlogDetail(item)
+                                        }}>{item.blogTitle}</div>}
+                                        description={<div className={twoWrapStyle} >{item.blogContent.replace(/<\/?.+?\/?>/g, "")}</div>}
+                                    />
+                                    <div style={{ paddingLeft: 50, color: "#00000073" }}>
+                                        <MessageOutlined /> {item.commentAmount}
+                                        <span style={{ marginLeft: 18 }}>{item.createTime}</span>
+                                    </div>
 
-                    dataSource={categoryList[currentIndex].blogList}
-                    footer={null}
-                    renderItem={(item, index) => (
-                        <List.Item
-                            key={index}
-                            actions={[]}
-                            extra={
-                                <img
-                                    width={120}
-                                    alt="logo"
-                                    src="https://gw.alipayobjects.com/zos/rmsportal/mqaQswcyDLcXyDKnZfES.png"
-                                />
-                            }
-                        >
-                            <List.Item.Meta
-                                avatar={<Avatar src={item.avatar} />}
-                                title={<div className={blogTitleStyle} onClick={() => {
-                                    handleClickBlogDetail(item)
-                                }}>{item.blogTitle}</div>}
-                                description={item.blogContent}
-                            />
-                            <div style={{ paddingLeft: 50, color: "#00000073" }}><MessageOutlined /> 156</div>
-
-                        </List.Item>
-                    )}
-                />
+                                </List.Item>
+                            )}
+                        />
+                        : null}
             </div>
         </div>
     </div>

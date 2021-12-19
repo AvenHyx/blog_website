@@ -105,17 +105,19 @@ export async function addTag(body, options) {
 }
 
 /**删除标签分类信息【管理员权限】POST /api/deleteTagById */
-export async function deleteTagById(options) {
+export async function deleteTagById(body, options) {
   return request('/api/deleteTagById', {
     method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }
 
 /**修改标签分类信息【管理员权限 POST /api/modifyTag*/
-export async function modifyTagById(options) {
+export async function modifyTagById(body, options) {
   return request('/api/modifyTag', {
     method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }
@@ -129,57 +131,64 @@ export async function getCategoryMenu(options) {
 }
 
 /**发博客 POST  /api/blo*/
-export async function sendBlog(options) {
+export async function sendBlog(body, options) {
   return request('/api/blog', {
     method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }
 /**修改博客 POST /api/modify/blog*/
-export async function modifyBlog(options) {
+export async function modifyBlog(body, options) {
   return request('/api/modify/blog', {
     method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }
 
 /**删除博客 POST /api/deleteBlogById*/
-export async function deleteBlogById(options) {
+export async function deleteBlogById(body, options) {
   return request('/api/deleteBlogById', {
     method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }
 
 /**发评论 POST /api/comment*/
-export async function comment(options) {
+export async function comment(body, options) {
   return request('/api/comment', {
     method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }
 
 /**删除评论 POST /api/deleteCommentById*/
-export async function deleteCommentById(options) {
+export async function deleteCommentById(body, options) {
   return request('/api/deleteCommentById', {
     method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }
 
 
 /**博客详情 GET /api/getBlogDetail*/
-export async function getBlogDetail(options) {
+export async function getBlogDetail(body, options) {
   return request('/api/getBlogDetail', {
-    method: 'GET',
+    method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }
 
 /**获取个人中心页面的数据【博客列表、权限拦截】POST /api/getPersonalCenter*/
-export async function getPersonalCenter(options) {
+export async function getPersonalCenter(body, options) {
   return request('/api/getPersonalCenter', {
     method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }
@@ -193,33 +202,37 @@ export async function getQueryInfo(options) {
 }
 
 /**关注 POST /api/forkUser*/
-export async function forkUser(options) {
+export async function forkUser(body, options) {
   return request('/api/forkUser', {
     method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }
 
 /**取消关注 POST /api/cancel/for*/
-export async function cancelForkUser(options) {
+export async function cancelForkUser(body, options) {
   return request('/api/cancel/fork', {
     method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }
 
 /**修改用户信息 POST /api/modify/userInfo*/
-export async function modifyUserInfo(options) {
+export async function modifyUserInfo(body, options) {
   return request('/api/modify/userInfo', {
     method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }
 
 /**修改密码 POST /api/modify/password*/
-export async function modifyPassword(options) {
+export async function modifyPassword(body, options) {
   return request('/api/modify/password', {
     method: 'POST',
+    data: body,
     ...(options || {}),
   });
 }

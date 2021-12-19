@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StarTwoTone, LikeOutlined, MessageFilled } from '@ant-design/icons';
 import { useRequest } from 'umi';
 import {
@@ -6,33 +6,40 @@ import {
   // Tag 
 } from 'antd';
 import ArticleListContent from '../ArticleListContent';
-import { queryFakeList } from '../../service';
+// import * as apis from '@/services/ant-design-pro/api';
 import styles from './index.less';
 
-const Articles = () => {
+const Articles = (props) => {
+
+  const { listData } = props
+  // const [listData, setListData] = useState([]) //文章列表
+
+  // useEffect(async () => {
+  //   let res = await apis.Articles()
+  // }, [])
   const IconText = ({ icon, text }) => (
     <span>
       {icon} {text}
     </span>
   ); // 获取tab列表数据
 
-  const { data: listData } = useRequest(() => {
-    return queryFakeList({
-      count: 30,
-    });
-  });
+  // const { data: listData } = useRequest(() => {
+  //   return queryFakeList({
+  //     count: 30,
+  //   });
+  // });
   return (
     <List
       size="large"
       className={styles.articleList}
       rowKey="id"
       itemLayout="vertical"
-      dataSource={listData?.list || []}
+      dataSource={listData || []}
       renderItem={(item) => (
         <List.Item
           key={item.id}
           actions={[
-            <IconText key="star" icon={<StarTwoTone />} text={item.star} />,
+            <IconText key="star" icon={<StarTwoTone />} text={item.commentAmount} />,
             <IconText key="like" icon={<LikeOutlined />} text={item.like} />,
             <IconText key="message" icon={<MessageFilled />} text={item.message} />,
           ]}
@@ -40,7 +47,7 @@ const Articles = () => {
           <List.Item.Meta
             title={
               <a className={styles.listItemMetaTitle} href={item.href}>
-                {item.title}
+                {item.blogTitle}
               </a>
             }
             description={

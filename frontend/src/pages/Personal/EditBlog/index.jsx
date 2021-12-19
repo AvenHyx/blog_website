@@ -1,123 +1,251 @@
 import 'braft-editor/dist/index.css'
 import React from 'react'
 import BraftEditor from 'braft-editor'
+import { ContentUtils } from 'braft-utils'
+import { ImageUtils } from 'braft-finder'
+import { history } from 'umi';
+import { Upload, Icon, Input, Button, Avatar, Tag, Select, Form, Modal, message } from 'antd'
+import { AreaChartOutlined, PlusOutlined } from '@ant-design/icons'
+import style from './index.less'
+import * as apis from '@/services/ant-design-pro/api'
+import axios from 'axios'
+import TagModal from '@/components/Modal'
 
-export default class PreviewDemo extends React.Component {
+const { Option } = Select;
+export default class UploadDemo extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      editorState: BraftEditor.createEditorState("<p></p>"),//文章内容
+      isModalVisible: false,//选择标签弹窗
+      tagList: [],//标签列表
+      tagId: [],//选中的标签
+      blogTitle: "",//文章标题
+    }
+  }
 
-    state = {
-        editorState: BraftEditor.createEditorState()
+
+  handleChange = (editorState) => {
+    this.setState({ editorState })
+  }
+
+  uploadHandler = async (content) => {
+    this.setState({
+      editorState: ContentUtils.insertMedias(this.state.editorState, [{
+        type: 'IMAGE',
+        url: content
+      }])
+    })
+  }
+
+  /**点击发布文章回调*/
+  releaseArticle = async () => {
+    let { editorState, blogTitle } = this.state
+
+    const errorHandler = {
+      "title": "博文标题不能为空",
+      "content": "博文内容不能为空"
     }
 
-    handleChange = (editorState) => {
-        this.setState({ editorState })
+    if (!blogTitle) {
+      return Modal.error({
+        content: errorHandler["title"]
+      })
+    }
+    else if (editorState.toHTML().length == 7) {
+      return Modal.error({
+        content: errorHandler["content"]
+      })
+    }
+    try {
+      let result = await apis.getTags()
+      if (result?.businessCode * 1 == 1000) {
+        let tagList = result.content
+        this.setState({
+          tagList,
+        })
+      }
+    } catch (error) {
+
     }
 
-    preview = () => {
+    this.setState({
+      isModalVisible: true,
+    })
+  }
 
-        if (window.previewWindow) {
-            window.previewWindow.close()
+
+  /**
+   * 弹出发布标签蒙层
+   * @param {*} bool 
+   */
+  handleBlogModal = async (bool) => {
+    let { tagId, blogTitle, editorState } = this.state
+    if (bool == true) {
+      //判断是否有勾选标签，如果否，则提示
+      if (!tagId.length) return message.error("请选择文章标签", 2)
+      //如果是true的话，发布文章
+      try {
+        let res = await apis.sendBlog({
+          blogTitle,
+          blogContent: editorState.toHTML(),
+          tagId
+        })
+        if (res && res?.businessCode * 1 === 1000) {
+          this.setState({
+            isModalVisible: false
+          }, () => {
+            Modal.success({
+              content: "发布成功",
+              onOk: () => {
+                //跳转到个人中心
+                history.push("/center")
+              }
+            })
+          })
+
+        } else {
+          message.error(res.msg || "发布失败")
         }
+      } catch (error) {
+        message.error(res.msg || "发布失败")
+      }
 
-        window.previewWindow = window.open()
-        window.previewWindow.document.write(this.buildPreviewHtml())
-        window.previewWindow.document.close()
-
+    } else {
+      this.setState({
+        isModalVisible: false
+      })
     }
+  }
 
-    buildPreviewHtml() {
 
-        return `
-      <!Doctype html>
-      <html>
-        <head>
-          <title>Preview Content</title>
-          <style>
-            html,body{
-              height: 100%;
-              margin: 0;
-              padding: 0;
-              overflow: auto;
-              background-color: #f1f2f3;
-            }
-            .container{
-              box-sizing: border-box;
-              width: 1000px;
-              max-width: 100%;
-              min-height: 100%;
-              margin: 0 auto;
-              padding: 30px 20px;
-              overflow: hidden;
-              background-color: #fff;
-              border-right: solid 1px #eee;
-              border-left: solid 1px #eee;
-            }
-            .container img,
-            .container audio,
-            .container video{
-              max-width: 100%;
-              height: auto;
-            }
-            .container p{
-              white-space: pre-wrap;
-              min-height: 1em;
-            }
-            .container pre{
-              padding: 15px;
-              background-color: #f1f1f1;
-              border-radius: 5px;
-            }
-            .container blockquote{
-              margin: 0;
-              padding: 15px;
-              background-color: #f1f1f1;
-              border-left: 3px solid #d1d1d1;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">${this.state.editorState.toHTML()}</div>
-        </body>
-      </html>
-    `
+  /**
+   * 选择标签【暂时只支持单选，不支持多选】
+   */
+  handleChangeTagSelect = (value) => {
+    this.setState({
+      // tagId: value,  //支持多选
+      tagId: value[0]  //支持单选
+    })
+  }
 
-    }
+  /**
+   * 文章标题变化
+   * @param {*} e  change 事件event
+   */
+  changeBlogTitle = (e) => {
+    this.setState({
+      blogTitle: e.target.value
+    })
+  }
 
-    render() {
 
-        const excludeControls = [
-            'letter-spacing',
-            'line-height',
-            'clear',
-            'headings',
-            'list-ol',
-            'list-ul',
-            'remove-styles',
-            'superscript',
-            'subscript',
-            'hr',
-            'text-align'
-        ]
+  render() {
+    const { isModalVisible, tagList, tagId } = this.state
 
-        const extendControls = [
-            {
-                key: 'custom-button',
-                type: 'button',
-                text: '预览',
-                onClick: this.preview
-            }
-        ]
+    const excludeControls = [
+      'letter-spacing',
+      'line-height',
+      'clear',
+      'headings',
+      'remove-styles',
+      'superscript',
+      'subscript',
+      'hr',
+      'text-align'
+    ]
 
-        return (
-            <div className="editor-wrapper">
-                <BraftEditor
-                    onChange={this.handleChange}
-                    excludeControls={excludeControls}
-                    extendControls={extendControls}
-                    contentStyle={{ height: 400 }}
-                />
-            </div>
+    const extendControls = [
+      {
+        key: 'antd-uploader',
+        type: 'component',
+        component: (
+          <Upload
+            accept="image/*"
+            showUploadList={false}
+            action="/api/upload/avatar"
+            onChange={(files) => {
+              let file = files.file
+              console.log(file, file?.status == "done", file?.response?.businessCode == 1000)
+              if (file?.status == "done" && file?.response?.businessCode == 1000) {
+                this.uploadHandler(file.response.content)
+              }
+            }}
+          >
+            {/* 这里的按钮最好加上type="button"，以避免在表单容器中触发表单提交，用Antd的Button组件则无需如此 */}
+            <button type="button" className="control-item button upload-button" data-title="插入图片">
+              <AreaChartOutlined />
+            </button>
+          </Upload>
         )
+      }
+    ]
 
-    }
+    return (
+
+      <div className="editor-wrapper">
+        {isModalVisible && <TagModal
+          isModalVisible={isModalVisible}
+          handleOk={() => this.handleBlogModal(true)}
+          handleCancel={() => this.handleBlogModal(false)}
+          modalTitle="发布博文"
+        >
+          <Form.Item
+            label="文章标签"
+            name="文章标签"
+            initialValues=""
+          // rules={[{ required: true, message: '请选择文章标签' }]}
+          >
+            <Select
+              mode="multiple"
+              size={"large"}
+              placeholder="请选择标签"
+              defaultValue={[]}
+              onChange={this.handleChangeTagSelect}
+              style={{ width: '100%' }}
+              maxTagCount={5}
+              showArrow={true}
+
+            >
+              {tagList.map((_tag, _tagIndex) => {
+                return <Option key={_tag.tagId} disabled={tagId.includes(_tag.tagId)}>{_tag.tagName}</Option>
+              })}
+            </Select>
+          </Form.Item>
+
+
+        </TagModal>}
+        <header className={style.editHeader}>
+          <div className={style.topBar}>
+            <Input className={style.title} placeholder="请输入文章标题" onChange={this.changeBlogTitle} />
+          </div>
+          <div className={style.rightContent}>
+            <Button type="primary" style={{ width: 100, marginRight: 20 }} onClick={this.releaseArticle}>发布</Button>
+            <Avatar src={""} />
+          </div>
+        </header>
+        <main>
+          <div className={style.editContent}>
+            <div className={style.edit}
+            >
+              <BraftEditor
+                value={this.state.editorState}
+                onChange={this.handleChange}
+                extendControls={extendControls}
+                excludeControls={excludeControls}
+              />
+            </div>
+            <div className={style.preview}  >
+              <div className={style.previewTitle}>
+                界面预览
+              </div>
+              <div id="content" className={style.htmlStyle} dangerouslySetInnerHTML={{ __html: this.state.editorState.toHTML() }}></div>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+
+  }
 
 }

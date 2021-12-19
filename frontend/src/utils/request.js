@@ -41,9 +41,14 @@ const errorHandler = async (error) => {
                 let res = await apis.refreshToken({
                     refresh: localStorage.getItem("refresh-token")
                 })
-                let { access, refresh } = res
-                localStorage.setItem("access-token", access)
-                localStorage.setItem("refresh-token", refresh)
+                if (res.hasOwnProperty("access")) {
+                    let { access, refresh } = res
+                    localStorage.setItem("access-token", access)
+                    localStorage.setItem("refresh-token", refresh)
+                    await apis.currentUser()
+                }
+
+
             } catch (error) {
                 console.log("401", error)
                 history.push(loginPath);

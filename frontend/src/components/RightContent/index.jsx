@@ -37,14 +37,16 @@ const GlobalHeaderRight = () => {
    */
   const clickToCreate = () => {
     alert(1)
-
     history.push("/blog-edit")
   }
 
   return (
     <Space className={className}>
       <NoticeIcon />
-      <Button type="primary" onClick={clickToCreate}>写创作</Button>
+      {
+        history.location.pathname !== "/blog-edit" && <Button type="primary" onClick={clickToCreate}>写创作</Button>
+      }
+
       <Avatar menu={menu} />
 
     </Space>

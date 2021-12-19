@@ -1,15 +1,15 @@
 import { ProfileOutlined, SettingOutlined, UserOutlined, PlusOutlined, HomeOutlined, ContactsOutlined, ClusterOutlined } from '@ant-design/icons';
 import { Avatar, Card, Col, Divider, Input, Row, Tag } from 'antd';
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { GridContent } from '@ant-design/pro-layout';
 import { Link, useRequest, history } from 'umi';
-// import Projects from './components/Projects';
+import forkUser from './components/ForkPerson';
 import Articles from './components/Articles';
-import { queryCurrent } from './service';
 import styles from './Center.less';
 import cls from 'classnames'
 import Settings from './components/Settings'
 import Admin from './components/Admin'
+import *as apis from '@/services/ant-design-pro/api'
 
 const currentUser = {
   name: 'Serati Ma',
@@ -90,61 +90,25 @@ const IconMap = {
 
 
 const loading = false;
-const operationTabList = [
-  {
-    key: 'articles',
-    tab: (
-      <span>
-        文章{' '}
-        <span
-          style={{
-            fontSize: 14,
-          }}
-        >
-          (8)
-        </span>
-      </span>
-    ),
-  },
-  // {
-  //   key: 'applications',
-  //   tab: (
-  //     <span>
-  //       应用{' '}
-  //       <span
-  //         style={{
-  //           fontSize: 14,
-  //         }}
-  //       >
-  //         (8)
-  //       </span>
-  //     </span>
-  //   ),
-  // },
-  // {
-  //   key: 'projects',
-  //   tab: (
-  //     <span>
-  //       项目{' '}
-  //       <span
-  //         style={{
-  //           fontSize: 14,
-  //         }}
-  //       >
-  //         (8)
-  //       </span>
-  //     </span>
-  //   ),
-  // },
-];
+
 
 
 const Center = () => {
   const [tabKey, setTabKey] = useState('articles'); //  获取用户信息
   const [current, setCurrent] = useState(0) //当前高亮的tab
-  // const { data: currentUser, loading } = useRequest(() => {
-  //   return queryCurrent();
-  // }); //  渲染用户信息
+  const [personInfo, setPersonInfo] = useState({}) //个人中心信息
+
+  useEffect(async () => {
+    try {
+      let res = await apis.getPersonalCenter()
+      if (res && res?.businessCode * 1 === 1000) {
+        setPersonInfo(res.content)
+      }
+    } catch (error) {
+
+    }
+
+  }, [])
 
   const renderUserInfo = ({ title, group, geographic }) => {
     return (
@@ -213,6 +177,7 @@ const Center = () => {
 
   /**博客 */
   const renderBlog = () => {
+
     return <Card
       className={styles.tabsCard}
       bordered={false}
@@ -230,7 +195,7 @@ const Center = () => {
     const { active } = styles
     return (
       <div className={styles.tabStyle}>
-        {menuList.map((_item, _index) => {
+        {personInfo.asideMenu.map((_item, _index) => {
           let { menuId, menuName, menuType } = _item
           return (
             <p onClick={() => {
@@ -248,21 +213,89 @@ const Center = () => {
     );
   }
   const renderChildrenByTabKey = (tabValue) => {
-    if (tabValue === 'projects') {
-      return <Projects />;
+    switch (tabValue) {
+      case "articles":
+        return <Articles listData={personInfo.myBlogList} />;
+      case "fork":
+        return <forkUser listData={personInfo.forkList} />;
+      case "follow":
+        return <forkUser listData={personInfo.followerList} />;
+      default:
+        break;
     }
 
-    if (tabValue === 'applications') {
-      return <Applications />;
-    }
+    // if (tabValue === 'articles') {
 
-    if (tabValue === 'articles') {
+    //   return <Articles listData={personInfo.myBlogList} />;
+    // }
+    // if (tabValue === 'projects') {
+    //   return <Projects />;
+    // }
 
-      return <Articles />;
-    }
+    // if (tabValue === 'applications') {
+    //   return <Applications />;
+    // }
+
+
 
     return null;
   };
+
+  console.log(personInfo, ">>>>personInfo")
+
+  if (!Object.keys(personInfo).length) {
+
+
+    return null
+  }
+
+  const operationTabList = [
+    {
+      key: 'articles',
+      tab: (
+        <span>
+          博客文章
+          <span
+            style={{
+              fontSize: 14,
+            }}
+          >
+            {`(${personInfo?.myBlogList?.length})` || ""}
+          </span>
+        </span>
+      ),
+    },
+    {
+      key: 'fork',
+      tab: (
+        <span>
+          关注者
+          <span
+            style={{
+              fontSize: 14,
+            }}
+          >
+            {`(${personInfo?.forkList?.length})` || ""}
+          </span>
+        </span>
+      ),
+    },
+    {
+      key: 'follow',
+      tab: (
+        <span>
+          粉丝
+          <span
+            style={{
+              fontSize: 14,
+            }}
+          >
+            {`(${personInfo?.followerList?.length})` || ""}
+          </span>
+        </span>
+      ),
+    },
+  ];
 
   return (
     <GridContent>
@@ -296,12 +329,11 @@ const Center = () => {
               </div>
             )}
           </Card>
-          <div className={styles.team}>
-            {/* <Card> */}
-            {renderTabs()}
-            {/* </Card> */}
-          </div>
-
+          {
+            personInfo.asideMenu.length ? <div className={styles.team}>
+              {renderTabs()}
+            </div> : null
+          }
         </Col>
         <Col lg={17} md={24}>
           {current == 0 && renderBlog()}
