@@ -48,6 +48,7 @@ class Comments(models.Model):
     content = models.CharField(max_length=500)
     replyUserId = models.IntegerField()
     replyUserName = models.CharField(max_length=100, default='未知用户')
+    ifDeleted = models.IntegerField(default=0)
 
     class Meta:
         managed = True

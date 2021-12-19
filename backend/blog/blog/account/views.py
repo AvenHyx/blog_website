@@ -1,8 +1,8 @@
-import json
 import uuid
 import qiniu
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.authentication import BasicAuthentication
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.views.decorators.csrf import csrf_exempt
@@ -25,6 +25,7 @@ pre_url = 'http://img.aryazdp.cn/'
 
 
 @api_view(['POST'])
+@authentication_classes([BasicAuthentication])
 @permission_classes((AllowAny,))
 def register(request):
     if request.method == 'POST':
@@ -52,6 +53,7 @@ def upload(request):
 
 
 @api_view(['POST'])
+@authentication_classes([BasicAuthentication])
 @permission_classes((AllowAny,))
 def login(request):
     try:
@@ -221,25 +223,29 @@ def add_comment(request):
 @permission_classes((IsAuthenticated,))
 def delete_comment_by_Id(request):
     try:
-        comment = Comments.objects.get(pk=request.data['commentId'])
-        article = Articles.objects.get(pk=comment.articleId)
+        comment_m = Comments.objects.get(pk=request.data['commentId'])
+        comment = CommentSerializer(comment_m).data
+        article = Articles.objects.get(pk=comment['articleId'])
+        article = ArticleSerializer(article).data
     except Exception:
         return Response({'businessCode': 1001, 'content': False, 'msg': 'not exist'})
     try:
         token = str(request.auth)
         user_id = get_userid_from_token(token)
-        userId = User.objects.get(pk=user_id)  # 实际为username
-        article_userId = article.userId
-        if comment.userId == userId or article_userId == userId:
-            serializer = CommentSerializer(
-                data={"userId": comment.userId, 'articleId': comment.articleId, 'content': '评论已被删除',
-                      'replyUserId': comment.replyUserId, 'replyUserName': comment.replyUserName})
-            serializer.save()
-            return Response({'businessCode': 1000, 'content': True})
+        userId = UserSerializer(User.objects.get(pk=user_id)).data['id'] # username
+        username = UserSerializer(User.objects.get(pk=user_id)).data['username']
+        article_userId = article['userId']
+        if comment['userId'] == userId or article_userId == userId:
+            serializer = CommentSerializer(comment_m,
+                data={"userId": comment['userId'], 'articleId': comment['articleId'], 'content': '评论已被'+f'{username}'+'删除',
+                      'replyUserId': comment['replyUserId'], 'replyUserName': comment['replyUserName'], 'ifDeleted': 1})
+            if serializer.is_valid():
+                serializer.save()
+                return Response({'businessCode': 1000, 'content': True})
         else:
             return Response({'businessCode': 1001, 'content': False, 'msg': 'not permitted'})
-    except Exception:
-        return Response({'businessCode': 1001, 'content': False})
+    except Exception as e:
+        return Response({'businessCode': 1001, 'content': str(e)})
 
 
 @api_view(['POST'])
@@ -330,39 +336,66 @@ def cancel_fork(request):
     return Response({'businessCode': 1000, 'content': True})
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes((AllowAny,))
 def get_blog_detail(request):
     try:
         blog_id = request.data['blogId']
         blog = Articles.objects.get(pk=blog_id)
-        author_id = blog.userId  # name
-        author = User.objects.get(username=author_id)
+        blog = ArticleSerializer(blog).data
+        author_id = blog['userId']  # name
+        author = User.objects.get(pk=author_id)
+        author = UserSerializer(author).data
         comment_list = Comments.objects.filter(articleId=blog_id).order_by('time')
+        comment_list = CommentSerializer(comment_list, many=True).data
 
         def map_function(x):
-            c_user = User.objects.get(username=x.id)
+            c_user = User.objects.get(pk=x['userId'])
+            c_user = UserSerializer(c_user).data
+            comment = Comments.objects.get(id=x['id'])
+            comment = CommentSerializer(comment).data
             return {
-                'userId': c_user.id,
-                'userName': c_user.username,
-                'userAvatar': c_user.avatar,
-                'commentContent': c_user.content,
-                'commentId': c_user.id,
-                'commentDate': c_user.time,
-                'replyUserName': c_user.replyUserName,
-                'replyUserId': c_user.replyUserId
+                'userId': c_user['id'],
+                'userName': c_user['username'],
+                'userAvatar': c_user['avatar'],
+                'commentContent': comment['content'],
+                'commentId': comment['id'],
+                'commentDate': comment['time'],
+                'replyUserName': comment['replyUserName'],
+                'replyUserId': comment['replyUserId'],
+                'ifDeleted': comment['ifDeleted']
             }
         comment_list_json = list(map(map_function, comment_list))
-        content = json.dumps({
-            'blogId': blog.id,
-            'blogTitle': blog.title,
-            'blogContent': blog.content,
-            'createTime': blog.time,
-            'userId': author.id,
-            'avatar': author.avatar,
-            'userName': author.username,
-            'commentList': comment_list_json
-        })
+        # userInfo
+        user = User.objects.get(id=author['id'])
+        user_serializer = UserSerializer(user).data
+        username = user_serializer['username']
+        userId = user_serializer['id']
+        avatar = user_serializer['avatar']
+        create_time = user_serializer['date_joined']
+        role = user_serializer['role']
+        fork_number = Follow.objects.filter(followerId=author['id']).count()
+        follower_number = Follow.objects.filter(followedId=author['id']).count()
+        user_info = {
+            "userId": userId,
+            "username": username,
+            "avatar": avatar,
+            "createTime": create_time,
+            "forkNumber": fork_number,
+            "followerNumber": follower_number,
+            "role": role
+        }
+        content = {
+            "userInfo": user_info,
+            "blogId": blog['id'],
+            "blogTitle": blog['title'],
+            "blogContent": blog['content'],
+            "createTime": blog['time'],
+            "userId": author['id'],
+            "avatar": author['avatar'],
+            "userName": author['username'],
+            "commentList": comment_list_json
+        }
         return Response({'businessCode': 1000, 'content': content})
     except Exception:
         return Response({'businessCode': 1001, 'content': False, 'msg': 'not exist'})
@@ -380,6 +413,7 @@ def get_user_info(request):
     serializer = UserSerializer(user)
     content = {
         "username": serializer.data['username'],
+        "userId": serializer.data['id'],
         "email": serializer.data['email'],
         "mobile": serializer.data['phone'],
         "avatar": serializer.data['avatar'],
@@ -485,7 +519,7 @@ def get_personal_center(request):
         user_serializer = UserSerializer(user).data
         is_manager = user_serializer['is_staff']
         aside_menu = [
-            {"menuName": '个人中心', "menuId": 1, "menuType": 'center'},
+            {"menuName": '博客中心', "menuId": 1, "menuType": 'blog'},
             {"menuName": '设置中心', "menuId": 2, "menuType": 'settings'}
         ]
         if is_manager:

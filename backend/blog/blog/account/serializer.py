@@ -34,23 +34,38 @@ class UserSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
 
+    tagId = serializers.SerializerMethodField()
+    tagName = serializers.SerializerMethodField()
+
     class Meta:
         model = Category
         fields = '__all__'
 
+    def get_tagId(self, obj):
+        return obj.id
+
+    def get_tagName(self, obj):
+        return obj.name
+
 
 class ArticleSerializer(serializers.ModelSerializer):
 
-    time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    time = serializers.DateTimeField(
+        format='%Y-%m-%d %H:%M:%S',
+        required=False
+    )
 
     class Meta:
         model = Articles
-        fields = '__all__'
+        fields = "__all__"
 
 
 class CommentSerializer(serializers.ModelSerializer):
 
-    time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    time = serializers.DateTimeField(
+        format='%Y-%m-%d %H:%M:%S',
+        required=False
+    )
 
     class Meta:
         model = Comments
