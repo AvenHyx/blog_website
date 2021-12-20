@@ -1,33 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { StarTwoTone, LikeOutlined, MessageFilled } from '@ant-design/icons';
-import { useRequest } from 'umi';
+import { useRequest, history } from 'umi';
+
 import {
   List,
   // Tag 
 } from 'antd';
 import ArticleListContent from '../ArticleListContent';
-// import * as apis from '@/services/ant-design-pro/api';
 import styles from './index.less';
 
 const Articles = (props) => {
-
   const { listData } = props
-  // const [listData, setListData] = useState([]) //文章列表
-
-  // useEffect(async () => {
-  //   let res = await apis.Articles()
-  // }, [])
   const IconText = ({ icon, text }) => (
     <span>
       {icon} {text}
     </span>
   ); // 获取tab列表数据
 
-  // const { data: listData } = useRequest(() => {
-  //   return queryFakeList({
-  //     count: 30,
-  //   });
-  // });
+
+  /**
+   * 跳转到博客详情
+   * @param {*} id 博客id
+   * @returns 
+   */
+  const clickToBlogDetail = id => history.push(`/blogDetail?blogId=${id}`)
+
   return (
     <List
       size="large"
@@ -39,23 +36,16 @@ const Articles = (props) => {
         <List.Item
           key={item.id}
           actions={[
-            <IconText key="star" icon={<StarTwoTone />} text={item.commentAmount} />,
-            <IconText key="like" icon={<LikeOutlined />} text={item.like} />,
-            <IconText key="message" icon={<MessageFilled />} text={item.message} />,
+            <IconText key="message" icon={<MessageFilled />} text={item.commentAmount} />,
           ]}
         >
           <List.Item.Meta
             title={
-              <a className={styles.listItemMetaTitle} href={item.href}>
+              <div className={styles.listItemMetaTitle} onClick={() => {
+                clickToBlogDetail(item.blogId)
+              }} >
                 {item.blogTitle}
-              </a>
-            }
-            description={
-              <span>
-                {/* <Tag>Ant Design</Tag>
-                <Tag>设计语言</Tag>
-                <Tag>蚂蚁金服</Tag> */}
-              </span>
+              </div>
             }
           />
           <ArticleListContent data={item} />

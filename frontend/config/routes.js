@@ -61,17 +61,18 @@ export default [
     component: "./Personal/EditBlog",
     hideInMenu: true
   },
-  // {
-  //   path: '/setting',
-  //   name: "setting",
-  //   icon: "setting",
-  //   component: "./Personal/account/settings"
-  // },
   {
     path: '/blogDetail',
     name: "blogDetail",
     icon: "snippets",
     component: "./BlogDetail",
+    hideInMenu: true
+  },
+  {
+    path: '/fork-detail',
+    name: "fork-detail",
+    icon: "snippets",
+    component: "./ForkDetail",
     hideInMenu: true
   },
   // {

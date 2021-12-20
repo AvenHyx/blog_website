@@ -1,8 +1,9 @@
 import React, { useState, useEffect, PureComponent, useRef } from "react";
-import { Tag, Input, Tooltip } from 'antd';
+import { Tag, Input, Button, Tooltip, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import './index.less'
 import * as apis from "@/services/ant-design-pro/api"
+
 
 
 export default () => {
@@ -16,11 +17,12 @@ export default () => {
     //关闭
 
 
-    /**查询标签 */
+    /**初次进入effect */
     useEffect(async () => {
         queryTags()
     }, [])
 
+    /**查询当前标签 */
     const queryTags = async () => {
         try {
             let res = await apis.getTags()
@@ -32,10 +34,26 @@ export default () => {
         }
     }
 
-    const handleClose = removedTag => {
-        const tag = tags.filter(tag => tag !== removedTag);
-        console.log(tag);
-        setTag(tag)
+    /**删除标签 */
+    const handleClose = async (removedTag) => {
+        let { tagId } = removedTag
+        try {
+            let res = await apis.deleteTagById({ tagId })
+            if (res && res?.businessCode * 1 === 1000) {
+                message.success("删除成功", 1)
+                queryTags()
+            } else {
+                message.error("删除失败，重新再试")
+                setTimeout(() => {
+                    queryTags()
+                }, 200)
+            }
+        } catch (error) {
+            message.error("删除失败，重新再试")
+            setTimeout(() => {
+                queryTags()
+            }, 200)
+        }
     };
 
     const showInput = () => {
@@ -50,42 +68,63 @@ export default () => {
         setInputValue(e.target.value)
     };
 
+    /**标签确认回调 */
     const handleInputConfirm = async () => {
-        let tag;
-        console.log(tags, inputValue, "handleInputConfirm")
-        // if (inputValue && tags.indexOf(inputValue) === -1) {
-        //     tag = [...tags, inputValue].filter(_item => _item != "");
-
-        //     setTag(tag)
-        // }
-
-
-        let res = await apis.addTag({
-            tagName: inputValue
-        })
-        if (res && res?.businessCode * 1 === 1000) {
-            // setTag(tag)
-            queryTags()
+        if (inputValue) {
+            try {
+                let res = await apis.addTag({
+                    tagName: inputValue
+                })
+                if (res && res?.businessCode * 1 === 1000) {
+                    queryTags()
+                } else {
+                    message.error("新增失败，稍后再试", 2)
+                }
+                setInputVisible(false)
+                setInputValue("")
+            } catch (error) {
+                message.error("新增失败，稍后再试", 2)
+                setInputVisible(false)
+                setInputValue("")
+            }
+        } else {
+            setInputVisible(false)
+            setInputValue("")
         }
-        setInputVisible(false)
-        setInputValue("")
-
     };
 
+    /**修改当前标签ipt输入的值 */
     const handleEditInputChange = e => {
         setEditInputValue(e.target.value)
     };
-    const handleEditInputConfirm = () => {
-        let newTags = [...tags];
-        newTags[editInputIndex] = editInputValue;
-        setTag(newTags.filter(_item => _item != ""))
-        setEditInputValue('')
-        setEditInputIndex(-1)
+
+    /**修改当前标签Api请求 */
+    const handleEditInputConfirm = async () => {
+        if (!editInputValue) {
+            return message.error("标签不能为空", 2)
+        }
+        let { tagId } = [...tags][editInputIndex]
+        try {
+            let res = await apis.modifyTagById({ tagName: editInputValue, tagId })
+            if (res && res?.businessCode * 1 === 1000) {
+                queryTags()
+                setEditInputValue('')
+                setEditInputIndex(-1)
+            } else {
+                message.error("修改标签失败", 2)
+                setEditInputValue('')
+                setEditInputIndex(-1)
+            }
+        } catch (error) {
+            setEditInputValue('')
+            setEditInputIndex(-1)
+        }
     };
 
     return (
 
         <div className="admin-container">
+            {/* <div style={{ marginBottom: 20 }}><Button type="primary">设置标签</Button></div> */}
             {tags && tags.length && tags.map((tag, index) => {
                 if (editInputIndex === index) {
                     return (
@@ -108,20 +147,18 @@ export default () => {
                     <Tag
                         className="edit-tag"
                         key={tag.tagId}
-                        closable={index !== 0}
+                        closable={true}
                         onClose={() => handleClose(tag)}
                     >
                         <span
                             onDoubleClick={e => {
-                                if (index !== 0) {
-                                    setEditInputIndex(index)
-                                    setEditInputValue(tag.tagName)
-                                    setTimeout(() => {
-                                        saveEditInputRef.current.focus()
-                                    }, 200)
+                                setEditInputIndex(index)
+                                setEditInputValue(tag.tagName)
+                                setTimeout(() => {
+                                    saveEditInputRef.current.focus()
+                                }, 200)
 
-                                    e.preventDefault();
-                                }
+                                e.preventDefault();
                             }}
                         >
                             {isLongTag ? `${tag.tagName.slice(0, 20)}...` : tag.tagName}
@@ -150,7 +187,7 @@ export default () => {
             )}
             {!inputVisible && (
                 <Tag className="site-tag-plus" onClick={showInput}>
-                    <PlusOutlined /> New Tag
+                    <PlusOutlined /> 设置标签
                 </Tag>
             )}
         </div>

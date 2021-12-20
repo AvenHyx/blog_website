@@ -9,6 +9,7 @@ import moment from 'moment';
 import NoFoundPage from '@/pages/404'
 import DeleteModal from '@/components/Modal'
 import { defaultImg } from '@/utils/utils'
+import BlogAside from '@/components/BlogAside';
 const { TextArea } = Input;
 
 
@@ -26,6 +27,7 @@ export default (props) => {
     const [showMore, setShowMore] = useState(false) //是否展示更多
     const [showDeleteModal, setShowDeleteModal] = useState(false) //是否展示确认删除蒙层
     const [deleteInfo, setDeleteInfo] = useState({})  //删除的内容
+    const [isForked, setIsForked] = useState(false)   //是否已关注
     /**
      * 获取博客详情
      */
@@ -40,10 +42,8 @@ export default (props) => {
             let res = await apis.getBlogDetail({ blogId })
             if (res && res?.businessCode * 1 === 1000) {
                 setBlogInfo(res.content)
-                // setShowMore(res.content?.commentList?.length > 5)
             }
         } catch (error) {
-
         }
     }
 
@@ -293,10 +293,25 @@ export default (props) => {
         </>
     }
 
-    const { blogContainer, blogSide,
-        userCard, avatarImg, avatarHolder,
-        userInfoStyle, userNameStyle,
-        createTimeStyle, blogRightCenter, antCenterName, mt_12, mr_8, flexRow,
+    /**关注 */
+    // const handleForkUser = async (id) => {
+    //     try {
+    //         let res = await apis[isForked ? "cancelForkUser" : "forkUser"]({
+    //             userId: id
+    //         })
+    //         if (res && res?.businessCode * 1 === 1000) {
+    //             setIsForked(!isForked)
+    //             queryBlogDetail()
+    //         } else {
+    //             message.error(isForked ? "取消关注失败" : "关注失败")
+    //         }
+    //     } catch (error) {
+
+    //     }
+    // }
+    const { blogContainer,
+        blogRightCenter,
+        mr_8,
         article_title,
         infoStyle,
         blogContentStyle,
@@ -304,10 +319,6 @@ export default (props) => {
         commentWrapper,
         commentView
     } = styles
-    const IconStyle = {
-        fontSize: 20,
-        marginRight: 8
-    }
 
 
 
@@ -318,9 +329,8 @@ export default (props) => {
         }}
         />
     }
-    console.log(blogInfo, ">>>>blogInfo")
     const { currentUser } = initialState
-    const { blogTitle, blogContent, commentList, createTime, userInfo: { userId, username, avatar, followerNumber, forkNumber, role } } = blogInfo
+    const { blogTitle, blogContent, commentList, createTime, userInfo, userInfo: { userId, username, avatar, followerNumber, forkNumber, role } } = blogInfo
 
     return <div className={blogContainer}>
         <DeleteModal
@@ -336,37 +346,7 @@ export default (props) => {
             }}
             isModalVisible={showDeleteModal}
         />
-        <div className={blogSide}>
-            <div className={userCard}>
-                <div className={avatarHolder}>
-                    <img alt="" className={avatarImg} src={avatar ? avatar : defaultImg} />
-                    <div className={antCenterName}>{username}</div>
-                </div>
-                {currentUser.userId !== userId ? <div style={{ textAlign: "center" }}>
-                    <Button type="primary" shape="round" style={{ backgroundColor: "#0e5fc9", textAlign: "center" }} icon={<PlusOutlined style={{ fontSize: 16 }} />} size={18}>
-                        关注
-                    </Button>
-                </div> : null}
-                <div className={userInfoStyle}>
-                    <div className={mt_12}>
-                        <UserOutlined style={IconStyle} />
-                        <span>{0 ? "管理员" : "博主"}</span>
-                    </div>
-                    <div className={mt_12}>
-                        <HeartOutlined style={IconStyle} />
-                        <span >关注</span>
-                        <span >{forkNumber}</span>
-                    </div>
-                    <div className={cls([mt_12, flexRow])}>
-                        <StarOutlined style={IconStyle} />
-                        <span>粉丝</span>
-                        <span>{followerNumber}</span>
-                    </div>
-
-                </div>
-
-            </div>
-        </div>
+        <BlogAside userInfo={userInfo} cb={queryBlogDetail} />
         <div className={blogRightCenter}>
             <div className={blogContentView}>
                 <h1 className={article_title}>
@@ -383,12 +363,11 @@ export default (props) => {
                     <p dangerouslySetInnerHTML={{ __html: blogContent }}></p>
                 </div>
             </div>
-            {/* <div className={commentWrapper}>
-                <MessageOutlined /> {commentList.length ? commentList.length : "评论"}
-            </div> */}
-            <div className={commentView}>
+
+            {commentList.length ? <div className={commentView}>
                 {renderComment()}
-            </div>
+            </div> : null}
+
             <div className={commentView}>
                 <Comment
                     avatar={<Avatar src={currentUser.avatar ? currentUser.avatar : defaultImg} alt="评论头像" />}

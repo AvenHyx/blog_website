@@ -194,8 +194,9 @@ export async function getPersonalCenter(body, options) {
 }
 
 /**查看fork和follower的个人中心 GET /api/query/info*/
-export async function getQueryInfo(options) {
-  return request('/api/query/info', {
+export async function getQueryInfo(body, options) {
+  console.log(body, "body", options)
+  return request(`/api/query/info?userId=${body.userId}`, {
     method: 'GET',
     ...(options || {}),
   });

@@ -9,6 +9,7 @@ import { List, Avatar, Space } from 'antd';
 import { MessageOutlined, LikeOutlined, StarOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
 import cls from 'classnames'
 import * as apis from '@/services/ant-design-pro/api'
+import { htmlToText } from '@/utils/utils'
 
 
 export default () => {
@@ -86,7 +87,7 @@ export default () => {
                                         title={<div className={blogTitleStyle} onClick={() => {
                                             handleClickBlogDetail(item)
                                         }}>{item.blogTitle}</div>}
-                                        description={<div className={twoWrapStyle} >{item.blogContent.replace(/<\/?.+?\/?>/g, "")}</div>}
+                                        description={<div className={twoWrapStyle} >{htmlToText(item.blogContent)}</div>}
                                     />
                                     <div style={{ paddingLeft: 50, color: "#00000073" }}>
                                         <MessageOutlined /> {item.commentAmount}

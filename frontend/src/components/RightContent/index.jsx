@@ -33,10 +33,9 @@ const GlobalHeaderRight = () => {
   }
 
   /**
-   * 创作
+   * 写创作
    */
   const clickToCreate = () => {
-    alert(1)
     history.push("/blog-edit")
   }
 

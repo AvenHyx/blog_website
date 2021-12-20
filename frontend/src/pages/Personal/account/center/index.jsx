@@ -1,67 +1,69 @@
 import { ProfileOutlined, SettingOutlined, UserOutlined, PlusOutlined, HomeOutlined, ContactsOutlined, ClusterOutlined } from '@ant-design/icons';
-import { Avatar, Card, Col, Divider, Input, Row, Tag } from 'antd';
+import { Avatar, Card, Col, Divider, Input, Row, Tag, message } from 'antd';
 import React, { useEffect, useState, useRef } from 'react';
 import { GridContent } from '@ant-design/pro-layout';
-import { Link, useRequest, history } from 'umi';
-import forkUser from './components/ForkPerson';
+import { Link, useRequest, History, useModel } from 'umi';
+import ForkUser from './components/ForkPerson';
 import Articles from './components/Articles';
 import styles from './Center.less';
 import cls from 'classnames'
 import Settings from './components/Settings'
 import Admin from './components/Admin'
 import *as apis from '@/services/ant-design-pro/api'
+import { defaultImg } from '@/utils/utils'
 
-const currentUser = {
-  name: 'Serati Ma',
-  avatar: 'https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png',
-  userid: '00000001',
-  email: 'antdesign@alipay.com',
-  signature: '海纳百川，有容乃大',
-  title: '交互专家',
-  group: '蚂蚁金服－某某某事业群－某某平台部－某某技术部－UED',
-  tags: [
-    {
-      key: '0',
-      label: '很有想法的',
-    },
-    {
-      key: '1',
-      label: '专注设计',
-    },
-    {
-      key: '2',
-      label: '辣~',
-    },
-    {
-      key: '3',
-      label: '大长腿',
-    },
-    {
-      key: '4',
-      label: '川妹子',
-    },
-    {
-      key: '5',
-      label: '海纳百川',
-    },
-  ],
-  notifyCount: 12,
-  unreadCount: 11,
-  country: 'China',
-  // access: getAccess(),
-  geographic: {
-    province: {
-      label: '浙江省',
-      key: '330000',
-    },
-    city: {
-      label: '杭州市',
-      key: '330100',
-    },
-  },
-  address: '西湖区工专路 77 号',
-  phone: '0752-268888888',
-}
+
+// const currentUser = {
+//   name: 'Serati Ma',
+//   avatar: 'https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png',
+//   userid: '00000001',
+//   email: 'antdesign@alipay.com',
+//   signature: '海纳百川，有容乃大',
+//   title: '交互专家',
+//   group: '蚂蚁金服－某某某事业群－某某平台部－某某技术部－UED',
+//   tags: [
+//     {
+//       key: '0',
+//       label: '很有想法的',
+//     },
+//     {
+//       key: '1',
+//       label: '专注设计',
+//     },
+//     {
+//       key: '2',
+//       label: '辣~',
+//     },
+//     {
+//       key: '3',
+//       label: '大长腿',
+//     },
+//     {
+//       key: '4',
+//       label: '川妹子',
+//     },
+//     {
+//       key: '5',
+//       label: '海纳百川',
+//     },
+//   ],
+//   notifyCount: 12,
+//   unreadCount: 11,
+//   country: 'China',
+//   // access: getAccess(),
+//   geographic: {
+//     province: {
+//       label: '浙江省',
+//       key: '330000',
+//     },
+//     city: {
+//       label: '杭州市',
+//       key: '330100',
+//     },
+//   },
+//   address: '西湖区工专路 77 号',
+//   phone: '0752-268888888',
+// }
 
 
 const menuList = [
@@ -94,69 +96,32 @@ const loading = false;
 
 
 const Center = () => {
+  const { initialState, setInitialState } = useModel("@@initialState")
   const [tabKey, setTabKey] = useState('articles'); //  获取用户信息
   const [current, setCurrent] = useState(0) //当前高亮的tab
   const [personInfo, setPersonInfo] = useState({}) //个人中心信息
+  const { currentUser, currentUser: { username, avatar } } = initialState
 
+  /**初次请求数据 */
   useEffect(async () => {
+    queryPersonInfo()
+  }, [])
+
+  /**
+   * 查询当前数据
+   * @param {*} current  当前索引
+   */
+  const queryPersonInfo = async (tabKey) => {
     try {
       let res = await apis.getPersonalCenter()
       if (res && res?.businessCode * 1 === 1000) {
         setPersonInfo(res.content)
+        if (tabKey) setTabKey(tabKey)
       }
     } catch (error) {
 
     }
-
-  }, [])
-
-  const renderUserInfo = ({ title, group, geographic }) => {
-    return (
-      <div className={styles.detail}>
-        <p>
-          <ContactsOutlined
-            style={{
-              marginRight: 8,
-            }}
-          />
-          {title}
-        </p>
-        <p>
-          <ClusterOutlined
-            style={{
-              marginRight: 8,
-            }}
-          />
-          {group}
-        </p>
-        <p>
-          <HomeOutlined
-            style={{
-              marginRight: 8,
-            }}
-          />
-          {
-            (
-              geographic || {
-                province: {
-                  label: '',
-                },
-              }
-            ).province.label
-          }
-          {
-            (
-              geographic || {
-                city: {
-                  label: '',
-                },
-              }
-            ).city.label
-          }
-        </p>
-      </div>
-    );
-  }; // 渲染tab切换
+  }
 
 
   //切换tab
@@ -191,6 +156,8 @@ const Center = () => {
     </Card>
   }
 
+
+  /**左侧菜单栏 */
   const renderTabs = () => {
     const { active } = styles
     return (
@@ -212,32 +179,46 @@ const Center = () => {
       </div>
     );
   }
+
+
+
+  /**
+   * @name Fn 处理关注/取消关注的函数
+   * @param {*} item  当前关注/粉丝信息
+   * @param {*} tabValue  当前博客中心所定的tab类型
+   */
+  const handleForkUser = async (item, tabValue) => {
+    let { isForked, userId } = item
+    try {
+      let res = await apis[isForked ? "cancelForkUser" : "forkUser"]({ userId })
+      if (res && res?.businessCode * 1 === 1000) {
+        queryPersonInfo(tabValue)
+      } else {
+        message.error(isForked ? "取消关注失败" : "关注失败", 2)
+
+      }
+    } catch (error) {
+
+    }
+  }
+
+  /**博客中心的tab列表 */
   const renderChildrenByTabKey = (tabValue) => {
+    let { myBlogList, forkList, followerList, } = personInfo
     switch (tabValue) {
       case "articles":
-        return <Articles listData={personInfo.myBlogList} />;
+        return <Articles listData={myBlogList} />;
       case "fork":
-        return <forkUser listData={personInfo.forkList} />;
+        return <ForkUser listData={forkList} handleForkUser={(item) => {
+          handleForkUser(item, tabValue)
+        }} />;
       case "follow":
-        return <forkUser listData={personInfo.followerList} />;
+        return <ForkUser listData={followerList} handleForkUser={(item) => {
+          handleForkUser(item, tabValue)
+        }} />;
       default:
         break;
     }
-
-    // if (tabValue === 'articles') {
-
-    //   return <Articles listData={personInfo.myBlogList} />;
-    // }
-    // if (tabValue === 'projects') {
-    //   return <Projects />;
-    // }
-
-    // if (tabValue === 'applications') {
-    //   return <Applications />;
-    // }
-
-
-
     return null;
   };
 
@@ -249,6 +230,7 @@ const Center = () => {
     return null
   }
 
+  /**博客中心右侧内容mapList */
   const operationTabList = [
     {
       key: 'articles',
@@ -309,23 +291,10 @@ const Center = () => {
             loading={loading}
           >
             {!loading && currentUser && (
-              <div>
-                <div className={styles.avatarHolder}>
-                  <img alt="" src={currentUser.avatar} />
-                  <div className={styles.name}>{currentUser.name}</div>
-                  <div>{currentUser?.signature}</div>
-                </div>
-                {renderUserInfo(currentUser)}
-                {/* <Divider dashed /> */}
-                {/* <TagList tags={currentUser.tags || []} /> */}
-                {/* <Divider
-                  style={{
-                    marginTop: 16,
-                  }}
-                  dashed
-                /> */}
-
-
+              <div className={styles.avatarHolder}>
+                <img alt="" src={avatar || defaultImg} />
+                <div className={styles.name}>{username}</div>
+                <div>加入博客时间：{personInfo.createTime}</div>
               </div>
             )}
           </Card>
@@ -344,6 +313,7 @@ const Center = () => {
 
     </GridContent>
   );
+
 };
 
 export default Center;
