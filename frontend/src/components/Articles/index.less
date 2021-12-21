@@ -1,5 +1,19 @@
 @import '~antd/es/style/themes/default.less';
 
+.articleList {
+  :global {
+    .ant-list-item:first-child {
+      padding-top: 0;
+    }
+  }
+}
+.listItemMetaTitle {
+  cursor: pointer;
+  &:hover {
+    color: #0e5fc9;
+  }
+}
+
 .listContent {
   .description {
     display: -webkit-box;
@@ -11,14 +25,22 @@
     -webkit-box-orient: vertical;
   }
   .extra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-top: 16px;
     color: @text-color-secondary;
     line-height: 22px;
+    .edit {
+      color: rgba(14, 95, 201, 0.8);
+      font-size: 16px;
+      cursor: pointer;
+    }
     & > :global(.ant-avatar) {
       position: relative;
       top: 1px;
       width: 20px;
-      height: 20px;
+      height: 22px;
       margin-right: 8px;
       vertical-align: top;
     }

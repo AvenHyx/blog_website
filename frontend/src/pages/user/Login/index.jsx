@@ -47,7 +47,7 @@ const Login = () => {
       // 登录
       const msg = await login({ ...values, type });
 
-      if (msg?.content) {
+      if (msg) {
         const defaultLoginSuccessMessage = intl.formatMessage({
           id: 'pages.login.success',
           defaultMessage: '登录成功！',
@@ -70,7 +70,6 @@ const Login = () => {
 
       setUserLoginState(msg);
     } catch (error) {
-      console.log(error, ">>>error")
       const defaultLoginFailureMessage = intl.formatMessage({
         id: 'pages.login.failure',
         defaultMessage: '登录失败，请重试！',

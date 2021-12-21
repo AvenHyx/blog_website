@@ -38,14 +38,9 @@ export async function getInitialState() {
     try {
       const Auth = await getAccessToken(values)
       if (Auth) {
-        const msg = await apis.currentUser();
+        const msg = await apis.currentUser({});
 
-        if (msg && msg?.businessCode * 1 == 1000) {
-          console.log(msg.content, ">>>>>msg")
-          return msg.content;
-        } else {
-
-        }
+        if (msg) return msg
       }
 
 
@@ -61,10 +56,10 @@ export async function getInitialState() {
   //这段代码暂时不执行
   if (history.location.pathname !== loginPath) {
     const msg = await apis.currentUser();
-    if (msg && msg?.businessCode * 1 == 1000) {
+    if (msg) {
       return {
         fetchUserInfo,
-        currentUser: msg.content,
+        currentUser: msg,
         settings: {},
       };
     } else {

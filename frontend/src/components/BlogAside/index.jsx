@@ -2,7 +2,7 @@ import React from "react";
 import { Button, } from 'antd'
 import { StarOutlined, UserOutlined, HeartOutlined, PlusOutlined } from '@ant-design/icons'
 import { defaultImg } from '@/utils/utils'
-import { useModel } from 'umi'
+import { history, useModel } from 'umi'
 import cls from 'classnames'
 import styles from './index.less'
 import * as apis from "@/services/ant-design-pro/api"
@@ -61,7 +61,9 @@ export default (props) => {
 
     return <div className={blogSide}>
         <div className={userCard}>
-            <div className={avatarHolder}>
+            <div className={avatarHolder} onClick={() => {
+                if (location.pathname !== "/fork-detail") history.push(`/fork-detail?id=${userId}`)
+            }}>
                 <img alt="" className={avatarImg} src={avatar ? avatar : defaultImg} />
                 <div className={antCenterName}>{username}</div>
             </div>

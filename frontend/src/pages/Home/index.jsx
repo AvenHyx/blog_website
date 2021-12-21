@@ -19,10 +19,8 @@ export default () => {
 
     /**首页获取分类信息 */
     useEffect(async () => {
-        let res = await apis.getCategoryMenu()
-        if (res && res?.businessCode * 1 == 1000) {
-            setCategoryList(res.content)
-        }
+        let res = await apis.getCategoryMenu({})
+        if (res) setCategoryList(res)
     }, [])
 
     const {

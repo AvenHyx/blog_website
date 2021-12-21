@@ -10,7 +10,9 @@ import style from './index.less'
 import * as apis from '@/services/ant-design-pro/api'
 import axios from 'axios'
 import TagModal from '@/components/Modal'
+import { getUrlQuery } from '@/utils/utils'
 
+const blogId = (getUrlQuery("id") ?? "" != "") ? getUrlQuery("id") : ""
 const { Option } = Select;
 export default class UploadDemo extends React.Component {
   constructor(props) {
@@ -24,6 +26,23 @@ export default class UploadDemo extends React.Component {
     }
   }
 
+
+  componentDidMount() {
+    if (blogId) this.mapBlogById()
+  }
+
+  /**编辑博客初始化接口 */
+  mapBlogById = async () => {
+    // mapBlogById  等服务端明天补充接口再调用
+    await apis.getBlogDetail({ blogId }).then(res => {
+      let { blogId, blogContent, blogTitle, tagId } = res
+      this.setState({
+        tagId: tagId ?? "" !== "" ? tagId : "",
+        blogTitle,
+        editorState: BraftEditor.createEditorState(blogContent)
+      })
+    })
+  }
 
   handleChange = (editorState) => {
     this.setState({ editorState })
@@ -44,12 +63,18 @@ export default class UploadDemo extends React.Component {
 
     const errorHandler = {
       "title": "博文标题不能为空",
-      "content": "博文内容不能为空"
+      "content": "博文内容不能为空",
+      'less': "博文标题字数在5-100以内"
     }
 
     if (!blogTitle) {
       return Modal.error({
         content: errorHandler["title"]
+      })
+    }
+    else if (blogTitle.length < 5 || blogTitle.length > 100) {
+      return Modal.error({
+        content: errorHandler["less"]
       })
     }
     else if (editorState.toHTML().length == 7) {
@@ -58,11 +83,10 @@ export default class UploadDemo extends React.Component {
       })
     }
     try {
-      let result = await apis.getTags()
-      if (result?.businessCode * 1 == 1000) {
-        let tagList = result.content
+      let result = await apis.getTags({})
+      if (result) {
         this.setState({
-          tagList,
+          tagList: result,
         })
       }
     } catch (error) {
@@ -85,18 +109,22 @@ export default class UploadDemo extends React.Component {
       //判断是否有勾选标签，如果否，则提示
       if (!tagId.length) return message.error("请选择文章标签", 2)
       //如果是true的话，发布文章
+      let param = {
+        blogTitle,
+        blogContent: editorState.toHTML(),
+        tagId,
+      }
+      //如果是编辑博客，请求加上博客id
+      param = blogId ? { ...param, blogId } : param
       try {
-        let res = await apis.sendBlog({
-          blogTitle,
-          blogContent: editorState.toHTML(),
-          tagId
-        })
-        if (res && res?.businessCode * 1 === 1000) {
+        let res = await apis[`${blogId !== '' ? 'sendBlog' : 'modifyBlog'}`](param)
+
+        if (res) {
           this.setState({
             isModalVisible: false
           }, () => {
             Modal.success({
-              content: "发布成功",
+              content: `${blogId ? '编辑' : '发布'}成功`,
               onOk: () => {
                 //跳转到个人中心
                 history.push("/center")
@@ -105,10 +133,10 @@ export default class UploadDemo extends React.Component {
           })
 
         } else {
-          message.error(res.msg || "发布失败")
+          message.error(`${blogId ? '编辑' : '发布'}失败`)
         }
       } catch (error) {
-        message.error(res.msg || "发布失败")
+        message.error(`${blogId ? '编辑' : '发布'}失败`)
       }
 
     } else {
@@ -141,7 +169,7 @@ export default class UploadDemo extends React.Component {
 
 
   render() {
-    const { isModalVisible, tagList, tagId } = this.state
+    const { isModalVisible, tagList, tagId, blogTitle } = this.state
 
     const excludeControls = [
       'letter-spacing',
@@ -166,7 +194,6 @@ export default class UploadDemo extends React.Component {
             action="/api/upload/avatar"
             onChange={(files) => {
               let file = files.file
-              console.log(file, file?.status == "done", file?.response?.businessCode == 1000)
               if (file?.status == "done" && file?.response?.businessCode == 1000) {
                 this.uploadHandler(file.response.content)
               }
@@ -217,7 +244,7 @@ export default class UploadDemo extends React.Component {
         </TagModal>}
         <header className={style.editHeader}>
           <div className={style.topBar}>
-            <Input className={style.title} placeholder="请输入文章标题" onChange={this.changeBlogTitle} />
+            <Input className={style.title} value={blogTitle} placeholder="请输入文章标题" onChange={this.changeBlogTitle} />
           </div>
           <div className={style.rightContent}>
             <Button type="primary" style={{ width: 100, marginRight: 20 }} onClick={this.releaseArticle}>发布</Button>

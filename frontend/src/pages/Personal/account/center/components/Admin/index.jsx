@@ -25,10 +25,8 @@ export default () => {
     /**查询当前标签 */
     const queryTags = async () => {
         try {
-            let res = await apis.getTags()
-            if (res && res?.businessCode * 1 === 1000) {
-                setTag(res.content)
-            }
+            let res = await apis.getTags({})
+            if (res) setTag(res)
         } catch (error) {
 
         }
@@ -39,7 +37,7 @@ export default () => {
         let { tagId } = removedTag
         try {
             let res = await apis.deleteTagById({ tagId })
-            if (res && res?.businessCode * 1 === 1000) {
+            if (res) {
                 message.success("删除成功", 1)
                 queryTags()
             } else {
@@ -75,7 +73,7 @@ export default () => {
                 let res = await apis.addTag({
                     tagName: inputValue
                 })
-                if (res && res?.businessCode * 1 === 1000) {
+                if (res) {
                     queryTags()
                 } else {
                     message.error("新增失败，稍后再试", 2)
@@ -106,7 +104,7 @@ export default () => {
         let { tagId } = [...tags][editInputIndex]
         try {
             let res = await apis.modifyTagById({ tagName: editInputValue, tagId })
-            if (res && res?.businessCode * 1 === 1000) {
+            if (res) {
                 queryTags()
                 setEditInputValue('')
                 setEditInputIndex(-1)

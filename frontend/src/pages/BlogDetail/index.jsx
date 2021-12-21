@@ -40,8 +40,8 @@ export default (props) => {
         let { location: { query: { blogId = "" } } } = props
         try {
             let res = await apis.getBlogDetail({ blogId })
-            if (res && res?.businessCode * 1 === 1000) {
-                setBlogInfo(res.content)
+            if (res) {
+                setBlogInfo(res)
             }
         } catch (error) {
         }
@@ -59,7 +59,7 @@ export default (props) => {
         let { commentId } = deleteInfo
         try {
             let res = await apis.deleteCommentById({ commentId })
-            if (res && res?.businessCode * 1 === 1000) {
+            if (res) {
                 setShowDeleteModal(false)
                 message.success("删除成功")
                 queryBlogDetail()
@@ -195,7 +195,7 @@ export default (props) => {
         // }
         try {
             let result = await apis.comment(param)
-            if (result && result?.businessCode * 1 === 1000) {
+            if (result) {
                 message.success(`${type === "submit" ? "提交" : "回复"}成功`, 2)
                 setShowReply(false)
                 setvalue({

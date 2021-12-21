@@ -4,14 +4,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import { GridContent } from '@ant-design/pro-layout';
 import { Link, useRequest, History, useModel } from 'umi';
 import ForkUser from './components/ForkPerson';
-import Articles from './components/Articles';
+import Articles from '@/components/Articles';
 import styles from './Center.less';
 import cls from 'classnames'
 import Settings from './components/Settings'
 import Admin from './components/Admin'
 import *as apis from '@/services/ant-design-pro/api'
 import { defaultImg } from '@/utils/utils'
-
+import Modal from '@/components/Modal';
 
 // const currentUser = {
 //   name: 'Serati Ma',
@@ -100,7 +100,10 @@ const Center = () => {
   const [tabKey, setTabKey] = useState('articles'); //  获取用户信息
   const [current, setCurrent] = useState(0) //当前高亮的tab
   const [personInfo, setPersonInfo] = useState({}) //个人中心信息
+  const [blogId, setBlogId] = useState("")  //当前博客id
+  const [isModalVisible, setIsModalVisible] = useState(false)  //删除框显隐藏
   const { currentUser, currentUser: { username, avatar } } = initialState
+
 
   /**初次请求数据 */
   useEffect(async () => {
@@ -113,9 +116,9 @@ const Center = () => {
    */
   const queryPersonInfo = async (tabKey) => {
     try {
-      let res = await apis.getPersonalCenter()
-      if (res && res?.businessCode * 1 === 1000) {
-        setPersonInfo(res.content)
+      let res = await apis.getPersonalCenter({})
+      if (res) {
+        setPersonInfo(res)
         if (tabKey) setTabKey(tabKey)
       }
     } catch (error) {
@@ -191,7 +194,7 @@ const Center = () => {
     let { isForked, userId } = item
     try {
       let res = await apis[isForked ? "cancelForkUser" : "forkUser"]({ userId })
-      if (res && res?.businessCode * 1 === 1000) {
+      if (res) {
         queryPersonInfo(tabValue)
       } else {
         message.error(isForked ? "取消关注失败" : "关注失败", 2)
@@ -202,12 +205,34 @@ const Center = () => {
     }
   }
 
+  /**删除博客的回调 */
+  const deleteCallBack = (id) => {
+    setBlogId(id)
+    clickModal(true)
+  }
+
+  /**删除对话框的处理函数*/
+  const clickModal = async (type) => {
+    if (type == true) {
+      await apis.deleteBlogById({ blogId }).then(res => {
+        if (res ?? "" !== "") {
+          message.success("删除成功", 2)
+          queryPersonInfo()
+        } else {
+          message.error("删除失败", 2)
+        }
+      })
+    }
+    return setIsModalVisible(false)
+  }
+
+
   /**博客中心的tab列表 */
   const renderChildrenByTabKey = (tabValue) => {
     let { myBlogList, forkList, followerList, } = personInfo
     switch (tabValue) {
       case "articles":
-        return <Articles listData={myBlogList} />;
+        return <Articles listData={myBlogList} deleteCallBack={deleteCallBack} />;
       case "fork":
         return <ForkUser listData={forkList} handleForkUser={(item) => {
           handleForkUser(item, tabValue)
@@ -222,11 +247,7 @@ const Center = () => {
     return null;
   };
 
-  console.log(personInfo, ">>>>personInfo")
-
   if (!Object.keys(personInfo).length) {
-
-
     return null
   }
 
@@ -283,6 +304,15 @@ const Center = () => {
     <GridContent>
       <Row gutter={24}>
         <Col lg={7} md={24}>
+          {/* 删除对话框 */}
+          <Modal
+            isModalVisible={isModalVisible}
+            // modalTitle="确定删除该文章吗" 
+            handleCancel={
+              () => clickModal(false)
+            }
+            handleOk={() => clickModal(true)}
+            children={<div>确定删除该文章吗</div>} />
           <Card
             bordered={false}
             style={{

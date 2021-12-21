@@ -70,6 +70,7 @@ const request = extend({
     errorHandler,
     // 默认错误处理
     credentials: 'include', // 默认请求是否带上cookie
+    prefix: ""
 });
 
 // request拦截器, 改变url 或 options.
@@ -78,43 +79,35 @@ request.interceptors.request.use(async (url, options) => {
     if (c_token && c_token !== "undefined") {
         const headers = {
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${c_token}`
+            Accept: 'application/json',
+            Authorization: `Bearer ${c_token}`
         };
-        return (
-            {
-                url: url,
-                options: { ...options, headers: headers },
-            }
-        );
-    } else {
-        const headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            // 'Authorization': `Bearer ${c_token}`
-        };
-        return (
-            {
-                url: url,
-                options: { ...options },
-            }
-        );
+
+        if (["get", "GET"].includes(options.method)) {
+            return (
+                {
+                    url,
+                    options: { ...options, headers, params: { ...options.data } }
+                }
+            )
+        } else {
+            return (
+                {
+                    url,
+                    options: { ...options, headers },
+                }
+            );
+        }
+
     }
+    return (
+        {
+            url,
+            options,
+        }
+    );
 
 })
 
-// response拦截器, 处理response
-request.interceptors.response.use((response, options) => {
-    let token = response.headers.get("access-token") || "";
-    if (token && token != "undefined") {
-        alert("token")
-        localStorage.setItem("access-token", token);
-    }
-
-
-    return response;
-});
-
 
 export default request;
-
