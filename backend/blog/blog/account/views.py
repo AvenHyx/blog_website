@@ -200,6 +200,35 @@ def delete_blog_by_Id(request):
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
+def map_blog_by_id(request):
+    try:
+        blog = Articles.objects.get(pk=request.data['blogId'])
+    except Exception:
+        return Response({'businessCode': 1001, 'content': False, 'msg': 'not exist'})
+    try:
+        token = str(request.auth)
+        user_id = get_userid_from_token(token)
+        userId = User.objects.get(pk=user_id)
+        if blog.userId == userId:  # 实际为username
+            tag_id = ArticleSerializer(blog).data['category']
+            tag = Category.objects.get(pk=tag_id)
+            tag_name = CategorySerializer(tag).data['name']
+            content = {
+                "blogTitle": ArticleSerializer(blog).data['title'],
+                "blogId": ArticleSerializer(blog).data['id'],
+                "blogContent": ArticleSerializer(blog).data['content'],
+                "tagName": tag_name,
+                "tagId": tag_id,
+            }
+            return Response({'businessCode': 1000, 'content': content})
+        else:
+            return Response({'businessCode': 1001, 'content': False, 'msg': 'not permitted'})
+    except Exception as e:
+        return Response({'businessCode': 1001, 'content': str(e)})
+
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
 def add_comment(request):
     try:
         token = str(request.auth)
@@ -207,10 +236,11 @@ def add_comment(request):
         replyUserId = request.data['replyUserId']
         replyUserName = request.data['replyUserName']
         articleId = request.data['articleId']
+        type = request.data['type']
         user_id = get_userid_from_token(token)
         serializer = CommentSerializer(
             data={"userId": user_id, 'articleId': articleId, 'content': content, 'replyUserId': replyUserId,
-                  'replyUserName': replyUserName})
+                  'replyUserName': replyUserName, 'type': type})
     except Exception:
         return Response({'businessCode': 1001, 'content': False, 'msg': 'invalid data'})
     if serializer.is_valid():
@@ -340,6 +370,9 @@ def cancel_fork(request):
 @permission_classes((AllowAny,))
 def get_blog_detail(request):
     try:
+        token = str(request.auth) or None
+        if token:
+            my_id = get_userid_from_token(token)
         blog_id = request.data['blogId']
         blog = Articles.objects.get(pk=blog_id)
         blog = ArticleSerializer(blog).data
@@ -363,7 +396,8 @@ def get_blog_detail(request):
                 'commentDate': comment['time'],
                 'replyUserName': comment['replyUserName'],
                 'replyUserId': comment['replyUserId'],
-                'ifDeleted': comment['ifDeleted']
+                'ifDeleted': comment['ifDeleted'],
+                'type': comment['type'],
             }
         comment_list_json = list(map(map_function, comment_list))
         # userInfo
@@ -376,6 +410,10 @@ def get_blog_detail(request):
         role = user_serializer['role']
         fork_number = Follow.objects.filter(followerId=author['id']).count()
         follower_number = Follow.objects.filter(followedId=author['id']).count()
+        if token:
+            is_forked = Follow.objects.filter(followerId=my_id).filter(followedId=userId).count() > 0
+        else:
+            is_forked = False
         user_info = {
             "userId": userId,
             "username": username,
@@ -383,7 +421,8 @@ def get_blog_detail(request):
             "createTime": create_time,
             "forkNumber": fork_number,
             "followerNumber": follower_number,
-            "role": role
+            "role": role,
+            "isForked": is_forked,
         }
         content = {
             "userInfo": user_info,
@@ -397,8 +436,8 @@ def get_blog_detail(request):
             "commentList": comment_list_json
         }
         return Response({'businessCode': 1000, 'content': content})
-    except Exception:
-        return Response({'businessCode': 1001, 'content': False, 'msg': 'not exist'})
+    except Exception as e:
+        return Response({'businessCode': 1001, 'content': False, 'msg': str(e)})
 
 
 @api_view(['POST'])
@@ -544,6 +583,9 @@ def get_personal_center(request):
 def get_other_info(request):
     try:
         user_id = request.query_params['userId']
+        token = str(request.auth) or None
+        if token:
+            my_id = get_userid_from_token(token)
 
         # blogList
         articles = Articles.objects.filter(userId=user_id)
@@ -567,16 +609,24 @@ def get_other_info(request):
         user = User.objects.get(id=user_id)
         user_serializer = UserSerializer(user).data
         username = user_serializer['username']
+        role = user_serializer['role']
         avatar = user_serializer['avatar']
         create_time = user_serializer['date_joined']
         fork_number = Follow.objects.filter(followerId=user_id).count()
         follower_number = Follow.objects.filter(followedId=user_id).count()
+        if token :
+            is_forked = Follow.objects.filter(followerId=my_id).filter(followedId=user_id).count >0
+        else:
+            is_forked = False
         user_info = {
+            "userId": user_id,
             "username": username,
             "avatar": avatar,
             "createTime": create_time,
             "forkNumber": fork_number,
             "followerNumber": follower_number,
+            "role": role,
+            "isForked": is_forked,
         }
 
         return Response({'businessCode': 1000, 'content': {

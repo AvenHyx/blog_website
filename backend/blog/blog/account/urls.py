@@ -18,6 +18,7 @@ urlpatterns = [
     path('deleteTagById', views.delete_tag_by_id, name='delete_tag_by_id'),
     path('getTags', views.get_tags, name='get_tags'),
     path('blog', views.add_blog, name='add_blog'),
+    path('mapBlogById', views.map_blog_by_id, name='map_blog_by_id'),
     path('modify/blog', views.modify_blog, name='modify_blog'),
     path('deleteBlogById', views.delete_blog_by_Id, name='delete_blog_by_Id'),
     path('comment', views.add_comment, name='add_comment'),
