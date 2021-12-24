@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 
 class Category(models.Model):
@@ -24,11 +26,19 @@ class User(AbstractUser):
         managed = True
 
 
+def validate_title_length(value):
+    if len(value) < 5 or len(value) > 100:
+        raise ValidationError(
+            _('length of %(value) should be between 5 and 100 '),
+            params={'value': value},
+        )
+
+
 class Articles(models.Model):
     id = models.AutoField(primary_key=True)
     time = models.DateTimeField(auto_now_add=True)
     userId = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.CharField(max_length=30)
+    title = models.TextField(validators=[validate_title_length])
     content = models.TextField(max_length=30000)
     upvoteNum = models.IntegerField(default=0)
     commentNum = models.IntegerField(default=0)
@@ -49,6 +59,7 @@ class Comments(models.Model):
     replyUserId = models.IntegerField()
     replyUserName = models.CharField(max_length=100, default='未知用户')
     ifDeleted = models.IntegerField(default=0)
+    type = models.IntegerField() # 评论0；回复1
 
     class Meta:
         managed = True

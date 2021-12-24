@@ -4,8 +4,8 @@ from .models import Articles, User, Category, Comments, Follow
 
 
 class UserSerializer(serializers.ModelSerializer):
-    role = serializers.SerializerMethodField()
-    date_joined = serializers.DateTimeField(format='%Y-%m-%d')
+    role = serializers.SerializerMethodField(required=False)
+    date_joined = serializers.DateTimeField(format='%Y-%m-%d',required=False)
 
     class Meta:
         model = User
