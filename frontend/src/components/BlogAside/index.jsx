@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, } from 'antd'
+import { Button, Modal } from 'antd'
 import { StarOutlined, UserOutlined, HeartOutlined, PlusOutlined } from '@ant-design/icons'
 import { defaultImg } from '@/utils/utils'
 import { history, useModel } from 'umi'
@@ -44,7 +44,7 @@ export default (props) => {
             let res = await apis[isForked ? "cancelForkUser" : "forkUser"]({
                 userId: id
             })
-            if (res && res?.businessCode * 1 === 1000) {
+            if (res) {
                 // setIsForked(!isForked)
                 cb && cb()
             } else {
@@ -67,9 +67,23 @@ export default (props) => {
                 <img alt="" className={avatarImg} src={avatar ? avatar : defaultImg} />
                 <div className={antCenterName}>{username}</div>
             </div>
-            {currentUser.userId !== userId ? <div style={{ textAlign: "center" }}>
+
+
+
+
+            {currentUser?.userId !== userId ? <div style={{ textAlign: "center" }}>
                 <Button type={isForked ? "default" : "primary"} shape="round" onClick={() => {
-                    handleForkUser(userId)
+                    if (currentUser?.userId) {
+                        handleForkUser(userId)
+                    } else {
+                        Modal.warning({
+                            okText: "去登录",
+                            closable: true,
+                            onOk: () => { history.push('/user/login') },
+                            title: '您还未登录，快去登录吧~',
+                        })
+                    }
+
                 }}
                     style={{ textAlign: "center" }}
                     icon={isForked ? null : <PlusOutlined style={{ fontSize: 16 }} />} size={18}
@@ -77,6 +91,7 @@ export default (props) => {
                     {isForked ? "已关注" : "关注"}
                 </Button>
             </div> : null}
+
             <div className={userInfoStyle}>
                 <div className={mt_12}>
                     <UserOutlined style={IconStyle} />

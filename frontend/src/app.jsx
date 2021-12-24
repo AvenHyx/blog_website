@@ -6,6 +6,7 @@ import *as apis from './services/ant-design-pro/api';
 import { BookOutlined, LinkOutlined } from '@ant-design/icons';
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
+
 /** 获取用户信息比较慢的时候会展示一个 loading */
 
 export const initialStateConfig = {
@@ -39,7 +40,7 @@ export async function getInitialState() {
       const Auth = await getAccessToken(values)
       if (Auth) {
         const msg = await apis.currentUser({});
-
+        console.log(msg, "fetchUserInfo Func")
         if (msg) return msg
       }
 
@@ -54,8 +55,9 @@ export async function getInitialState() {
 
 
   //这段代码暂时不执行
-  if (history.location.pathname !== loginPath) {
-    const msg = await apis.currentUser();
+  if (history.location.pathname.indexOf("/user") < 0) {
+    const msg = await apis.currentUser({});
+    console.log(msg, "history.location.pathname.indexOf('/user') < 0")
     if (msg) {
       return {
         fetchUserInfo,
@@ -65,8 +67,6 @@ export async function getInitialState() {
     } else {
 
     }
-
-
   }
 
   return {
@@ -89,9 +89,7 @@ export const layout = ({ initialState }) => {
     onPageChange: () => {
       const { location } = history; // 如果没有登录，重定向到 login
       //这段暂时注释掉
-      if (!initialState?.currentUser && location.pathname !== loginPath) {
-        // alert(11)
-        console.log(initialState?.currentUser, ">>>>111")
+      if (!initialState?.currentUser && location.pathname.indexOf("/user") < 0) {
         history.push(loginPath);
       }
     },

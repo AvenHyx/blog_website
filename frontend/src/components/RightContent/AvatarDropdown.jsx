@@ -16,7 +16,9 @@ const AvatarDropdown = ({ menu }) => {
  */
   const loginOut = async () => {
     try {
-      let res = await apis.outLogin();
+      // alert(11)
+      let res = await apis.outLogin({});
+
       if (res) {
         const { query = {}, search, pathname } = history.location;
         const { redirect } = query; // Note: There may be security issues, please note

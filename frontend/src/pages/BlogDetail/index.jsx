@@ -17,6 +17,7 @@ const { TextArea } = Input;
 export default (props) => {
     const [blogInfo, setBlogInfo] = useState({})  //博客详情
     const { initialState, setInitialState } = useModel('@@initialState')
+    const { currentUser } = initialState
     const [value, setvalue] = useState({
         submitValue: "",
         replyValue: ""
@@ -28,6 +29,9 @@ export default (props) => {
     const [showDeleteModal, setShowDeleteModal] = useState(false) //是否展示确认删除蒙层
     const [deleteInfo, setDeleteInfo] = useState({})  //删除的内容
     const [isForked, setIsForked] = useState(false)   //是否已关注
+    const [remarkBlog, setRemarkBlog] = useState(false) //是否已经做了网络请求
+
+
     /**
      * 获取博客详情
      */
@@ -41,6 +45,7 @@ export default (props) => {
         try {
             let res = await apis.getBlogDetail({ blogId })
             if (res) {
+                setRemarkBlog(true)
                 setBlogInfo(res)
             }
         } catch (error) {
@@ -75,7 +80,7 @@ export default (props) => {
             header={`${comments.length} 回复`}
             itemLayout="horizontal"
             renderItem={item => {
-                let { ifDeleted, userName, userId, replyUserName, userAvatar, commentContent, commentDate, commentId } = item
+                let { ifDeleted, userName, userId, replyUserName, userAvatar, commentContent, commentDate, commentId, type } = item
 
                 return (
                     <li>
@@ -91,59 +96,16 @@ export default (props) => {
                                             onClick={() => {
                                                 setShowDeleteModal(true)
                                                 setDeleteInfo(item)
-                                                // Modal.confirm({
-                                                //     title: '是否删除当前评论?',
-                                                //     icon: <ExclamationCircleOutlined />,
-                                                //     content: '是否删除当前评论',
-                                                //     okText: 'Yes',
-                                                //     okType: 'danger',
-                                                //     cancelText: 'No',
-                                                //     onOk () {
-                                                //         // setDeleteInfo(item)
-                                                //         console.log('OK');
-
-                                                //     },
-                                                //     onCancel() {
-                                                //         console.log('Cancel');
-                                                //     }
-                                                // })
-
                                             }}>
                                             {(currentUser.userId === userId || currentUser.userId === blogInfo.userId) ? " 删除" : ""}
                                         </div>
                                     ]
                             }
-                            author={`${userName} 回复 ${replyUserName}`}
+                            author={`${userName} ${type == 0 ? "回复" : "评论"}  ${replyUserName}`}
                             avatar={userAvatar ? userAvatar : defaultImg}
                             content={commentContent}
                             datetime={commentDate}
                         >
-                            {/* <div>{replyInfo.commentId == commentId ? <div style={{ paddingLeft: 40 }}>
-                                <Comment
-                                    avatar={<Avatar src={currentUser.avatar ? currentUser.avatar : defaultImg} alt="评论头像" />}
-                                    content={
-                                        <>
-                                            <Form.Item>
-                                                <TextArea rows={4}
-                                                    onChange={(e) => handleChange({
-                                                        key: `reply`,
-                                                        inputValue: e.target.value
-                                                    })}
-                                                    value={value[`replyValue`]}
-                                                    placeholder={`回复给用户：${userName}`} />
-                                            </Form.Item>
-                                            <Form.Item>
-                                                <Button onClick={() => handleSubmit({ type: "reply" })} type="primary">
-                                                    回复评论
-                                                </Button>
-                                            </Form.Item>
-                                        </>
-                                    }
-                                />
-                            </div>
-                                : null
-                            }
-                            </div> */}
                         </Comment>
                     </li>
                 )
@@ -162,48 +124,34 @@ export default (props) => {
         type
     }) => {
         if (!value[`${type}Value`]) {
-            return;
+            return message.error("评论不能为空", 1);
         }
         /** */
         const { blogId, userInfo } = blogInfo
-        console.log(blogId)
+
         let param = {
             commentContent: value[`${type}Value`],
             articleId: blogId,
             replyUserId: type === "submit" ? userInfo["userId"] : replyInfo["userId"],
             replyUserName: type === "submit" ? userInfo["username"] : replyInfo["userName"],
+            type: type === "submit" ? 1 : 0
         };
+        if (!(currentUser?.userId)) {
+            param = { ...param, isNeedLogin: true }
+        }
 
-        // if (type === "submit") {
-        //     param = {
-        //         ...param,
-        //         replyUserId: userId,
-        //         replyUserName: username,
-
-        //     }
-        // } else if (type === "reply") {
-        //     let { username, userId } = replyInfo
-        //     param = {
-        //         ...param,
-        //         replyUserId: userId,
-        //         replyUserName: username,
-        //     }
-
-        //     console.log(replyInfo)
-
-        //     // return false
-        // }
         try {
-            let result = await apis.comment(param)
-            if (result) {
-                message.success(`${type === "submit" ? "提交" : "回复"}成功`, 2)
-                setShowReply(false)
-                setvalue({
-                    ...value,
-                    [`${type}Value`]: ''
-                })
-                queryBlogDetail()
-            }
+            await apis.comment(param).then(result => {
+                if (result ?? "" !== "") {
+                    message.success(`${type === "submit" ? "提交" : "回复"}成功`, 2)
+                    setShowReply(false)
+                    setvalue({
+                        ...value,
+                        [`${type}Value`]: ''
+                    })
+                    queryBlogDetail()
+                }
+            })
         } catch (error) {
 
         }
@@ -216,31 +164,6 @@ export default (props) => {
         })
     };
 
-    // const RenderCommentView = ({
-    //     btnTitle,
-    //     placeholder,
-    //     handleSubmit,
-    //     handleChange,
-    //     commentValue
-    // }) => {
-
-    //     console.log(commentValue, handleChange, ">>>>commentValue")
-    //     return <Comment
-    //         avatar={<Avatar src={avatar ? avatar : defaultImg} alt="评论头像" />}
-    //         content={
-    //             <>
-    //                 <Form.Item>
-    //                     <TextArea rows={4} onChange={handleChange} value={commentValue} placeholder={placeholder || ""} />
-    //                 </Form.Item>
-    //                 <Form.Item>
-    //                     <Button onClick={handleSubmit} type="primary">
-    //                         {btnTitle}
-    //                     </Button>
-    //                 </Form.Item>
-    //             </>
-    //         }
-    //     />
-    // }
 
     const renderComment = () => {
         let { commentList, userInfo: { avatar } } = blogInfo
@@ -248,7 +171,7 @@ export default (props) => {
             {commentList.length > 0 && <CommentList comments={commentList} />}
             {ifShowReply ? <div style={{ paddingLeft: 40 }}>
                 <Comment
-                    avatar={<Avatar src={currentUser.avatar ? currentUser.avatar : defaultImg} alt="评论头像" />}
+                    avatar={<Avatar src={currentUser?.avatar ? currentUser.avatar : defaultImg} alt="评论头像" />}
                     content={
                         <>
                             <Form.Item>
@@ -324,72 +247,79 @@ export default (props) => {
 
 
     if (!Object.keys(blogInfo).length) {
-        return <NoFoundPage backHome="回首页" title={"您的文章走丢了～"} isHide={true} clickHome={() => {
-            history.push("/")
-        }}
-        />
-    }
-    const { currentUser } = initialState
-    const { blogTitle, blogContent, commentList, createTime, userInfo, userInfo: { userId, username, avatar, followerNumber, forkNumber, role } } = blogInfo
-
-    return <div className={blogContainer}>
-        <DeleteModal
-            // modalTitle="删除该条评论"
-            children={<div style={{ display: "flex", alignItems: "center", fontSize: 18, fontWeight: "bold" }}><ExclamationCircleOutlined style={{
-                color: "red",
-                fontSize: 22,
-                marginRight: 6
-            }} />是否确定删除评论</div>}
-            handleOk={handleDeleteReply}
-            handleCancel={() => {
-                setShowDeleteModal(false)
+        if (remarkBlog) {
+            return <NoFoundPage backHome="回首页" title={"您的文章走丢了～"} isHide={true} clickHome={() => {
+                history.push("/")
             }}
-            isModalVisible={showDeleteModal}
-        />
-        <BlogAside userInfo={userInfo} cb={queryBlogDetail} />
-        <div className={blogRightCenter}>
-            <div className={blogContentView}>
-                <h1 className={article_title}>
-                    {blogTitle}
-                </h1>
-                <div className={infoStyle}>
-                    <img src={avatar ? avatar : defaultImg} alt="" style={{
-                        borderRadius: "50%", width: 20, height: 20, marginRight: 4, verticalAlign: "middle"
-                    }} />
-                    <span className={mr_8} style={{ fontSize: 16 }}>{username}</span>
-                    <span style={{ fontSize: 18, color: "rgba(0, 0, 0, 0.85)" }}>创建时间：{createTime}</span>
-                </div>
-                <div className={blogContentStyle}>
-                    <p dangerouslySetInnerHTML={{ __html: blogContent }}></p>
-                </div>
-            </div>
+            />
+        } else {
+            return null
+        }
 
-            {commentList.length ? <div className={commentView}>
-                {renderComment()}
-            </div> : null}
+    } else {
 
-            <div className={commentView}>
-                <Comment
-                    avatar={<Avatar src={currentUser.avatar ? currentUser.avatar : defaultImg} alt="评论头像" />}
-                    content={
-                        <>
-                            <Form.Item>
-                                <TextArea rows={4} onChange={(e) => handleChange({
-                                    key: "submit",
-                                    inputValue: e.target.value
-                                })} value={value["submitValue"]} />
-                            </Form.Item>
-                            <Form.Item>
-                                <Button onClick={() => handleSubmit({ type: "submit" })} type="primary">
-                                    提交评论
-                                </Button>
-                            </Form.Item>
-                        </>
-                    }
-                />
+        const { blogTitle, blogContent, commentList, createTime, userInfo, userInfo: { userId, username, avatar, followerNumber, forkNumber, role } } = blogInfo
+
+        return <div className={blogContainer}>
+            <DeleteModal
+                // modalTitle="删除该条评论"
+                children={<div style={{ display: "flex", alignItems: "center", fontSize: 18, fontWeight: "bold" }}><ExclamationCircleOutlined style={{
+                    color: "red",
+                    fontSize: 22,
+                    marginRight: 6
+                }} />是否确定删除评论</div>}
+                handleOk={handleDeleteReply}
+                handleCancel={() => {
+                    setShowDeleteModal(false)
+                }}
+                isModalVisible={showDeleteModal}
+            />
+            <BlogAside userInfo={userInfo} cb={queryBlogDetail} />
+            <div className={blogRightCenter}>
+                <div className={blogContentView}>
+                    <h1 className={article_title}>
+                        {blogTitle}
+                    </h1>
+                    <div className={infoStyle}>
+                        <img src={avatar ? avatar : defaultImg} alt="" style={{
+                            borderRadius: "50%", width: 20, height: 20, marginRight: 4, verticalAlign: "middle"
+                        }} />
+                        <span className={mr_8} style={{ fontSize: 16 }}>{username}</span>
+                        <span style={{ fontSize: 18, color: "rgba(0, 0, 0, 0.85)" }}>创建时间：{createTime}</span>
+                    </div>
+                    <div className={blogContentStyle}>
+                        <p dangerouslySetInnerHTML={{ __html: blogContent }}></p>
+                    </div>
+                </div>
+
+                {commentList.length ? <div className={commentView}>
+                    {renderComment()}
+                </div> : null}
+
+                <div className={commentView}>
+                    <Comment
+                        avatar={<Avatar src={currentUser?.avatar ? currentUser.avatar : defaultImg} alt="评论头像" />}
+                        content={
+                            <>
+                                <Form.Item>
+                                    <TextArea rows={4} onChange={(e) => handleChange({
+                                        key: "submit",
+                                        inputValue: e.target.value
+                                    })} value={value["submitValue"]} />
+                                </Form.Item>
+                                <Form.Item>
+                                    <Button onClick={() => handleSubmit({ type: "submit" })} type="primary">
+                                        提交评论
+                                    </Button>
+                                </Form.Item>
+                            </>
+                        }
+                    />
+                </div>
+
             </div>
 
         </div>
+    }
 
-    </div>
 }

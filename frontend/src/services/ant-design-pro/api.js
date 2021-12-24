@@ -4,31 +4,56 @@
 // import { request } from 'umi';
 
 import request from "@/utils/request";
+import { Modal, Button, Space } from 'antd';
+import Login from "@/pages/user/Login";
+import { history } from 'umi';
 
-/**处理http请求 */
-const httpReq = async (url, param, method, requestHeader) => {
-  const response = await request(url, {
+
+
+
+const response = async (url, param, method, requestHeader) => {
+  let result = await request(url, {
     method,
     data: param,
     requestHeader
   })
 
-  if (response) {
-    if (response.hasOwnProperty("businessCode")) {
-      let { businessCode } = response
-      if (businessCode * 1 === 1000) {
-        return response?.content
-      }
-    } else {
-      return response
-    }
-    // console.log(response.hasOwnProperty("businessCode") ? (response?.businessCode * 1 === 1000) ? response.content : null : response)
-    // return response?.content
+  return result
+}
+/**处理http请求 */
+const httpReq = async (url, param, method, requestHeader = "") => {
+
+  if (Object.keys(param).length && param.hasOwnProperty("isNeedLogin")) {
+    Modal.warning({
+      okText: "去登录",
+      closable: true,
+      onOk: () => { history.push('/user/login') },
+      title: '您还未登录，快去登录吧~',
+    })
   } else {
-    // return {
-    //   errorCode: response.businessCode
-    // }
+    let result = await response(url, param, method, requestHeader)
+    if (result) {
+      if (result?.status == "401") {
+        console.log(url, ">>>>url")
+        httpReq(url, param, method)
+      }
+      if (result.hasOwnProperty("businessCode")) {
+        let { businessCode } = result
+        if (businessCode * 1 === 1000) {
+          console.log(result?.content, "content")
+          return result?.content
+        }
+
+      } else {
+
+        return result
+      }
+
+    } else {
+
+    }
   }
+
 }
 
 

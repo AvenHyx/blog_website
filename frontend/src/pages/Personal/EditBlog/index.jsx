@@ -12,7 +12,7 @@ import axios from 'axios'
 import TagModal from '@/components/Modal'
 import { getUrlQuery } from '@/utils/utils'
 
-const blogId = (getUrlQuery("id") ?? "" != "") ? getUrlQuery("id") : ""
+
 const { Option } = Select;
 export default class UploadDemo extends React.Component {
   constructor(props) {
@@ -23,18 +23,19 @@ export default class UploadDemo extends React.Component {
       tagList: [],//标签列表
       tagId: [],//选中的标签
       blogTitle: "",//文章标题
+      blogId: (getUrlQuery("id") ?? "" != "") ? getUrlQuery("id") : ""
     }
   }
 
 
   componentDidMount() {
-    if (blogId) this.mapBlogById()
+    if (this.state.blogId) this.mapBlogById()
   }
 
   /**编辑博客初始化接口 */
   mapBlogById = async () => {
     // mapBlogById  等服务端明天补充接口再调用
-    await apis.getBlogDetail({ blogId }).then(res => {
+    await apis.mapBlogById({ blogId: this.state.blogId }).then(res => {
       let { blogId, blogContent, blogTitle, tagId } = res
       this.setState({
         tagId: tagId ?? "" !== "" ? tagId : "",
@@ -83,12 +84,14 @@ export default class UploadDemo extends React.Component {
       })
     }
     try {
-      let result = await apis.getTags({})
-      if (result) {
-        this.setState({
-          tagList: result,
-        })
-      }
+      await apis.getTags({}).then(res => {
+        if (res ?? "" !== "") {
+          this.setState({
+            tagList: res,
+          })
+        }
+
+      })
     } catch (error) {
 
     }
@@ -104,7 +107,7 @@ export default class UploadDemo extends React.Component {
    * @param {*} bool 
    */
   handleBlogModal = async (bool) => {
-    let { tagId, blogTitle, editorState } = this.state
+    let { tagId, blogTitle, editorState, blogId } = this.state
     if (bool == true) {
       //判断是否有勾选标签，如果否，则提示
       if (!tagId.length) return message.error("请选择文章标签", 2)
@@ -117,7 +120,7 @@ export default class UploadDemo extends React.Component {
       //如果是编辑博客，请求加上博客id
       param = blogId ? { ...param, blogId } : param
       try {
-        let res = await apis[`${blogId !== '' ? 'sendBlog' : 'modifyBlog'}`](param)
+        let res = await apis[`${blogId !== '' ? 'modifyBlog' : 'sendBlog'}`](param)
 
         if (res) {
           this.setState({
@@ -234,7 +237,7 @@ export default class UploadDemo extends React.Component {
               showArrow={true}
 
             >
-              {tagList.map((_tag, _tagIndex) => {
+              {tagList.length && tagList.map((_tag, _tagIndex) => {
                 return <Option key={_tag.tagId} disabled={tagId.includes(_tag.tagId)}>{_tag.tagName}</Option>
               })}
             </Select>

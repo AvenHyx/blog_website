@@ -1,5 +1,5 @@
 import { ProfileOutlined, SettingOutlined, UserOutlined, PlusOutlined, HomeOutlined, ContactsOutlined, ClusterOutlined } from '@ant-design/icons';
-import { Avatar, Card, Col, Divider, Input, Row, Tag, message } from 'antd';
+import { Avatar, Card, Col, Divider, Input, Row, Tag, message, Button } from 'antd';
 import React, { useEffect, useState, useRef } from 'react';
 import { GridContent } from '@ant-design/pro-layout';
 import { Link, useRequest, History, useModel } from 'umi';
@@ -12,6 +12,7 @@ import Admin from './components/Admin'
 import *as apis from '@/services/ant-design-pro/api'
 import { defaultImg } from '@/utils/utils'
 import Modal from '@/components/Modal';
+import NoLogin from "@/pages/404"
 
 // const currentUser = {
 //   name: 'Serati Ma',
@@ -102,8 +103,14 @@ const Center = () => {
   const [personInfo, setPersonInfo] = useState({}) //个人中心信息
   const [blogId, setBlogId] = useState("")  //当前博客id
   const [isModalVisible, setIsModalVisible] = useState(false)  //删除框显隐藏
-  const { currentUser, currentUser: { username, avatar } } = initialState
+  const { currentUser, } = initialState
 
+  if (!(currentUser?.userId)) {
+
+    return <NoLogin status={403} needBtn={false} title="您还未登录，点击右上角去登录～" />
+
+  }
+  const { username, avatar } = currentUser
 
   /**初次请求数据 */
   useEffect(async () => {
@@ -324,7 +331,9 @@ const Center = () => {
               <div className={styles.avatarHolder}>
                 <img alt="" src={avatar || defaultImg} />
                 <div className={styles.name}>{username}</div>
+                <div>身份：{currentUser.role == 0 ? "管理员" : "博主"}</div>
                 <div>加入博客时间：{personInfo.createTime}</div>
+
               </div>
             )}
           </Card>

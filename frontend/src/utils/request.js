@@ -4,7 +4,7 @@
  * 更详细的 api 文档: https://github.com/umijs/umi-request
  */
 import { extend } from 'umi-request';
-import { notification } from 'antd';
+import { notification, } from 'antd';
 import { history, Link } from 'umi';
 import * as apis from '@/services/ant-design-pro/api'
 const loginPath = '/user/login';
@@ -34,6 +34,7 @@ const codeMessage = {
  */
 const errorHandler = async (error) => {
     const { response } = error;
+
     if (response && response.status) {
         if (response.status == "401") {
             //重新刷新refresh
@@ -41,11 +42,12 @@ const errorHandler = async (error) => {
                 let res = await apis.refreshToken({
                     refresh: localStorage.getItem("refresh-token")
                 })
-                if (res.hasOwnProperty("access")) {
+
+                if (res && res.hasOwnProperty("access")) {
                     let { access, refresh } = res
                     localStorage.setItem("access-token", access)
                     localStorage.setItem("refresh-token", refresh)
-                    await apis.currentUser()
+                    // await apis.currentUser()
                 }
 
 
@@ -76,12 +78,18 @@ const request = extend({
 // request拦截器, 改变url 或 options.
 request.interceptors.request.use(async (url, options) => {
     let c_token = localStorage.getItem("access-token") || "";
+    console.log(options, "interceptors.request", options?.requestHeader)
     if (c_token && c_token !== "undefined") {
-        const headers = {
+        let headers = {
             'Content-Type': 'application/json',
             Accept: 'application/json',
             Authorization: `Bearer ${c_token}`
         };
+        // if (options?.requestHeader) {
+        //     console.log(options.requestHeader)
+        //     // headers = options.requestHeader
+        // }
+
 
         if (["get", "GET"].includes(options.method)) {
             return (
@@ -100,6 +108,7 @@ request.interceptors.request.use(async (url, options) => {
         }
 
     }
+
     return (
         {
             url,

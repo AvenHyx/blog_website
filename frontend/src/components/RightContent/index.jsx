@@ -7,6 +7,7 @@ import HeaderSearch from '../HeaderSearch';
 import styles from './index.less';
 import NoticeIcon from '../NoticeIcon/NoticeIcon';
 
+
 const menu = [
   {
     type: "center",
@@ -20,7 +21,7 @@ const menu = [
 
 const GlobalHeaderRight = () => {
   const { initialState } = useModel('@@initialState');
-
+  const { currentUser } = initialState
   if (!initialState || !initialState.settings) {
     return null;
   }
@@ -41,13 +42,18 @@ const GlobalHeaderRight = () => {
 
   return (
     <Space className={className}>
-      <NoticeIcon />
       {
-        history.location.pathname !== "/blog-edit" && <Button type="primary" onClick={clickToCreate}>写创作</Button>
+        currentUser?.username ? <>
+          <NoticeIcon />
+          {
+            history.location.pathname !== "/blog-edit" && <Button type="primary" onClick={clickToCreate}>写创作</Button>
+          }
+          <Avatar menu={menu} />
+
+        </> : <Button type="primary" onClick={() => {
+          history.push("/user/login")
+        }}>登录</Button>
       }
-
-      <Avatar menu={menu} />
-
     </Space>
   );
 };
