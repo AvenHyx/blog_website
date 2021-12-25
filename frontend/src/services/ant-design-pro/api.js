@@ -7,7 +7,7 @@ import request from "@/utils/request";
 import { Modal, Button, Space } from 'antd';
 import Login from "@/pages/user/Login";
 import { history } from 'umi';
-
+const loginPath = '/user/login';
 
 
 
@@ -17,13 +17,28 @@ const response = async (url, param, method, requestHeader) => {
     data: param,
     requestHeader
   })
+  if (result.status == 400) {
+    localStorage.clear()
+    return history.push(loginPath)
+  }
+  else if (result.status == 401 && url.indexOf("/api/token/refresh") > -1) {
+    console.log("捕获到了 refresh 过期了")
+    localStorage.clear()
+    history.push(loginPath)
+    return null;
+  }
+  else {
 
-  return result
+    console.log(result, ">>>>>>response")
+    return result
+  }
+
+
 }
 /**处理http请求 */
-const httpReq = async (url, param, method, requestHeader = "") => {
+const httpReq = async (url, param, method, requestHeader = {}) => {
 
-  if (Object.keys(param).length && param.hasOwnProperty("isNeedLogin")) {
+  if ((param ?? "" != "") && Object.keys(param).length && param.hasOwnProperty("isNeedLogin")) {
     Modal.warning({
       okText: "去登录",
       closable: true,
@@ -32,25 +47,40 @@ const httpReq = async (url, param, method, requestHeader = "") => {
     })
   } else {
     let result = await response(url, param, method, requestHeader)
+
+    console.log(result, ">>>>>>>httpReqresult ")
     if (result) {
-      if (result?.status == "401") {
-        console.log(url, ">>>>url")
-        httpReq(url, param, method)
-      }
       if (result.hasOwnProperty("businessCode")) {
         let { businessCode } = result
         if (businessCode * 1 === 1000) {
-          console.log(result?.content, "content")
           return result?.content
         }
-
       } else {
+        if (result.status == 400) {
+          return history.push(loginPath);
+        } else if (result.status == 401) {
+          // return httpReq(url, param, method)
+          // console.log(url, ">>>>url")
+          if (url.indexOf("/api/token/refresh")) {
+            localStorage.clear()
+            return history.push(loginPath)
+          } else {
+            return httpReq(url, param, method)
+          }
 
-        return result
+        }
+        else {
+          return result
+        }
       }
 
     } else {
-
+      if (url.indexOf("/api/token/refresh")) {
+        localStorage.clear()
+        history.push(loginPath)
+        return null
+      }
+      console.log("await response ", result)
     }
   }
 
@@ -73,12 +103,23 @@ export async function login(param) {
 
 /** 获取当前的用户 GET /api/currentUser */
 export async function currentUser(param) {
+  let c_token = localStorage.getItem("access-token") || "";
+  // alert(11)
+  let headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    // Authorization: `Bearer ${c_token}`,
+  };
   return httpReq(`/api/getUserInfo`, param, "POST");
 }
 
 /**getToken POST */
 export async function getToken(param) {
-  return httpReq(`/api/token`, param, "POST");
+
+  return httpReq(`/api/token`, param, "POST", {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  });
 }
 
 /**换取token  POST /api/refresh/token*/

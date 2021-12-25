@@ -35,27 +35,57 @@ const codeMessage = {
 const errorHandler = async (error) => {
     const { response } = error;
 
+    console.log(error, response, ">>>>response")
     if (response && response.status) {
-        if (response.status == "401") {
-            //重新刷新refresh
-            try {
-                let res = await apis.refreshToken({
-                    refresh: localStorage.getItem("refresh-token")
-                })
-
-                if (res && res.hasOwnProperty("access")) {
-                    let { access, refresh } = res
-                    localStorage.setItem("access-token", access)
-                    localStorage.setItem("refresh-token", refresh)
-                    // await apis.currentUser()
-                }
-
-
-            } catch (error) {
-                console.log("401", error)
+        if (response.status == 400) {
+            return history.push(loginPath);
+        }
+        else if (response.status == 401) {
+            if (response.url.indexOf("/api/token/refresh") > -1) {
+                localStorage.clear()
                 history.push(loginPath);
+            } else {
+                //重新刷新refresh
+                try {
+                    let fresh_token = localStorage.getItem("refresh-token") || ""
+                    if (fresh_token) {
+                        console.log(fresh_token)
+                        let res = await apis.refreshToken({
+                            refresh: fresh_token
+                        })
+                        console.log(res, fresh_token, "执行到这里了res")
+                        if (res) {
+                            console.log(res, fresh_token, "执行进来了了res")
+                            if (res.status == 401) {
+                                console.log("执行到这里了")
+                                localStorage.clear()
+                                history.push(loginPath);
+                            } else {
+                                if (res.hasOwnProperty("access")) {
+                                    let { access, refresh } = res
+                                    localStorage.setItem("access-token", access)
+                                    localStorage.setItem("refresh-token", refresh)
+                                    // await apis.currentUser()
+                                }
+                            }
+                        } else {
+                            localStorage.clear()
+                            history.push(loginPath);
+                        }
+                    } else {
+                        localStorage.clear()
+                        history.push(loginPath);
+
+                    }
+
+                } catch (error) {
+                    localStorage.clear()
+                    history.push(loginPath);
+                }
             }
-        } else {
+
+        }
+        else {
             const errorText = codeMessage[response.status] || response.statusText;
             const { status, url } = response;
             notification.error({
@@ -77,20 +107,26 @@ const request = extend({
 
 // request拦截器, 改变url 或 options.
 request.interceptors.request.use(async (url, options) => {
+
     let c_token = localStorage.getItem("access-token") || "";
-    console.log(options, "interceptors.request", options?.requestHeader)
     if (c_token && c_token !== "undefined") {
         let headers = {
             'Content-Type': 'application/json',
             Accept: 'application/json',
-            Authorization: `Bearer ${c_token}`
-        };
-        // if (options?.requestHeader) {
-        //     console.log(options.requestHeader)
-        //     // headers = options.requestHeader
-        // }
+        };;
+
+        if (Object.keys(options.requestHeader).length) {
+            headers = { ...options.requestHeader }
+        } else {
+            headers = {
+                ...headers,
+                Authorization: `Bearer ${c_token}`,
+            }
+        }
 
 
+
+        console.log(location.pathname, location.pathname.indexOf("/user"), headers, ">>>>1")
         if (["get", "GET"].includes(options.method)) {
             return (
                 {
@@ -107,14 +143,23 @@ request.interceptors.request.use(async (url, options) => {
             );
         }
 
-    }
-
-    return (
-        {
+    } else {
+        // return history.push(loginPath)
+        return {
             url,
             options,
         }
-    );
+    }
+
+
+
+
+    // return (
+    //     {
+    //         url,
+    //         options,
+    //     }
+    // );
 
 })
 

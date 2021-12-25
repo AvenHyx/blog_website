@@ -40,13 +40,12 @@ export async function getInitialState() {
       const Auth = await getAccessToken(values)
       if (Auth) {
         const msg = await apis.currentUser({});
-        console.log(msg, "fetchUserInfo Func")
         if (msg) return msg
       }
 
 
     } catch (error) {
-      console.log(error)
+      // localStorage.clear()
       history.push(loginPath);
     }
 
@@ -56,17 +55,20 @@ export async function getInitialState() {
 
   //这段代码暂时不执行
   if (history.location.pathname.indexOf("/user") < 0) {
-    const msg = await apis.currentUser({});
-    console.log(msg, "history.location.pathname.indexOf('/user') < 0")
-    if (msg) {
-      return {
-        fetchUserInfo,
-        currentUser: msg,
-        settings: {},
-      };
-    } else {
+    let c_token = localStorage.getItem("access-token") || ""
+    if (c_token != "") {
+      const msg = await apis.currentUser({});
+      if (msg) {
+        return {
+          fetchUserInfo,
+          currentUser: msg,
+          settings: {},
+        };
+      } else {
 
+      }
     }
+
   }
 
   return {
@@ -78,7 +80,6 @@ export async function getInitialState() {
 } // ProLayout 支持的api https://procomponents.ant.design/components/layout
 
 export const layout = ({ initialState }) => {
-  console.log(initialState, initialState?.currentUser?.username, "user")
   return {
     rightContentRender: () => <RightContent />,
     disableContentMargin: false,
@@ -91,6 +92,7 @@ export const layout = ({ initialState }) => {
       //这段暂时注释掉
       if (!initialState?.currentUser && location.pathname.indexOf("/user") < 0) {
         history.push(loginPath);
+        // localStorage.clear()
       }
     },
 

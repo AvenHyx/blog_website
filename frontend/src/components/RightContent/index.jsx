@@ -21,10 +21,12 @@ const menu = [
 
 const GlobalHeaderRight = () => {
   const { initialState } = useModel('@@initialState');
-  const { currentUser } = initialState
+
+
   if (!initialState || !initialState.settings) {
     return null;
   }
+  const { currentUser } = initialState
 
   const { navTheme, layout } = initialState.settings;
   let className = styles.right;

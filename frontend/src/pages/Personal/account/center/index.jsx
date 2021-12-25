@@ -327,7 +327,7 @@ const Center = () => {
             }}
             loading={loading}
           >
-            {!loading && currentUser && (
+            {!loading && Object.keys(currentUser).length && (
               <div className={styles.avatarHolder}>
                 <img alt="" src={avatar || defaultImg} />
                 <div className={styles.name}>{username}</div>
@@ -338,7 +338,7 @@ const Center = () => {
             )}
           </Card>
           {
-            personInfo.asideMenu.length ? <div className={styles.team}>
+            personInfo?.asideMenu?.length ? <div className={styles.team}>
               {renderTabs()}
             </div> : null
           }
