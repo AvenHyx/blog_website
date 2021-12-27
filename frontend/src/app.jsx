@@ -34,8 +34,6 @@ export async function getInitialState() {
   }
 
   const fetchUserInfo = async (values) => {
-
-    // values.password = "ccc"
     try {
       const Auth = await getAccessToken(values)
       if (Auth) {

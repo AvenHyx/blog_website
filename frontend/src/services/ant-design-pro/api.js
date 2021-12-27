@@ -11,34 +11,11 @@ const loginPath = '/user/login';
 
 
 
-const response = async (url, param, method, requestHeader) => {
-  let result = await request(url, {
-    method,
-    data: param,
-    requestHeader
-  })
-  if (result.status == 400) {
-    localStorage.clear()
-    return history.push(loginPath)
-  }
-  else if (result.status == 401 && url.indexOf("/api/token/refresh") > -1) {
-    console.log("捕获到了 refresh 过期了")
-    localStorage.clear()
-    history.push(loginPath)
-    return null;
-  }
-  else {
 
-    console.log(result, ">>>>>>response")
-    return result
-  }
-
-
-}
 /**处理http请求 */
-const httpReq = async (url, param, method, requestHeader = {}) => {
+const httpReq = async (url, param, method, requestHeader = "") => {
 
-  if ((param ?? "" != "") && Object.keys(param).length && param.hasOwnProperty("isNeedLogin")) {
+  if (((param ?? "") != "") && Object.keys(param).length && param.hasOwnProperty("isNeedLogin")) {
     Modal.warning({
       okText: "去登录",
       closable: true,
@@ -46,9 +23,12 @@ const httpReq = async (url, param, method, requestHeader = {}) => {
       title: '您还未登录，快去登录吧~',
     })
   } else {
-    let result = await response(url, param, method, requestHeader)
+    let result = await request(url, {
+      method,
+      data: param,
+      requestHeader
+    })
 
-    console.log(result, ">>>>>>>httpReqresult ")
     if (result) {
       if (result.hasOwnProperty("businessCode")) {
         let { businessCode } = result
@@ -56,18 +36,37 @@ const httpReq = async (url, param, method, requestHeader = {}) => {
           return result?.content
         }
       } else {
-        if (result.status == 400) {
-          return history.push(loginPath);
-        } else if (result.status == 401) {
-          // return httpReq(url, param, method)
-          // console.log(url, ">>>>url")
-          if (url.indexOf("/api/token/refresh")) {
-            localStorage.clear()
-            return history.push(loginPath)
-          } else {
-            return httpReq(url, param, method)
-          }
 
+        if (result.status == 400) {
+          history.push(loginPath);
+        } else if (result.status == 401) {
+
+          if (url.indexOf("/api/token/refresh") > -1) {
+            localStorage.clear()
+            history.push(loginPath)
+          } else {
+
+            const refreshRes = await refreshToken({
+              refresh: localStorage.getItem("refresh-token")
+            })
+
+            if (refreshRes && refreshRes.hasOwnProperty("access")) {
+              let { access, refresh } = refreshRes
+              localStorage.setItem("access-token", access)
+              localStorage.setItem("refresh-token", refresh)
+
+              let res = await request(url, {
+                method,
+                data: param,
+                requestHeader: {
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                  Authorization: `Bearer ${access}`
+                }
+              })
+              return res?.content;
+            }
+          }
         }
         else {
           return result
@@ -75,12 +74,14 @@ const httpReq = async (url, param, method, requestHeader = {}) => {
       }
 
     } else {
-      if (url.indexOf("/api/token/refresh")) {
-        localStorage.clear()
-        history.push(loginPath)
-        return null
-      }
-      console.log("await response ", result)
+
+      console.log(result, ">>>>result")
+      // if (url.indexOf("/api/token/refresh")) {
+      //   localStorage.clear()
+      //   history.push(loginPath)
+      //   return null
+      // }
+      // console.log("await response ", result)
     }
   }
 

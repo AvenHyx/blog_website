@@ -35,55 +35,16 @@ const codeMessage = {
 const errorHandler = async (error) => {
     const { response } = error;
 
-    console.log(error, response, ">>>>response")
     if (response && response.status) {
         if (response.status == 400) {
             return history.push(loginPath);
         }
         else if (response.status == 401) {
             if (response.url.indexOf("/api/token/refresh") > -1) {
+                //refresh接口报401，重定向到登录页面
                 localStorage.clear()
-                history.push(loginPath);
-            } else {
-                //重新刷新refresh
-                try {
-                    let fresh_token = localStorage.getItem("refresh-token") || ""
-                    if (fresh_token) {
-                        console.log(fresh_token)
-                        let res = await apis.refreshToken({
-                            refresh: fresh_token
-                        })
-                        console.log(res, fresh_token, "执行到这里了res")
-                        if (res) {
-                            console.log(res, fresh_token, "执行进来了了res")
-                            if (res.status == 401) {
-                                console.log("执行到这里了")
-                                localStorage.clear()
-                                history.push(loginPath);
-                            } else {
-                                if (res.hasOwnProperty("access")) {
-                                    let { access, refresh } = res
-                                    localStorage.setItem("access-token", access)
-                                    localStorage.setItem("refresh-token", refresh)
-                                    // await apis.currentUser()
-                                }
-                            }
-                        } else {
-                            localStorage.clear()
-                            history.push(loginPath);
-                        }
-                    } else {
-                        localStorage.clear()
-                        history.push(loginPath);
-
-                    }
-
-                } catch (error) {
-                    localStorage.clear()
-                    history.push(loginPath);
-                }
+                return history.push(loginPath);
             }
-
         }
         else {
             const errorText = codeMessage[response.status] || response.statusText;
@@ -113,20 +74,12 @@ request.interceptors.request.use(async (url, options) => {
         let headers = {
             'Content-Type': 'application/json',
             Accept: 'application/json',
-        };;
-
-        if (Object.keys(options.requestHeader).length) {
+        };
+        if (options?.requestHeader) {
             headers = { ...options.requestHeader }
         } else {
-            headers = {
-                ...headers,
-                Authorization: `Bearer ${c_token}`,
-            }
+            headers = { ...headers, Authorization: `Bearer ${c_token}` }
         }
-
-
-
-        console.log(location.pathname, location.pathname.indexOf("/user"), headers, ">>>>1")
         if (["get", "GET"].includes(options.method)) {
             return (
                 {
@@ -144,7 +97,6 @@ request.interceptors.request.use(async (url, options) => {
         }
 
     } else {
-        // return history.push(loginPath)
         return {
             url,
             options,

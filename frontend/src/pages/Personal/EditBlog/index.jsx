@@ -38,7 +38,8 @@ export default class UploadDemo extends React.Component {
     await apis.mapBlogById({ blogId: this.state.blogId }).then(res => {
       let { blogId, blogContent, blogTitle, tagId } = res
       this.setState({
-        tagId: tagId ?? "" !== "" ? tagId : "",
+        // tagId: tagId ?? "" !== "" ? tagId : "",
+        tagId: [tagId],
         blogTitle,
         editorState: BraftEditor.createEditorState(blogContent)
       })
@@ -174,6 +175,8 @@ export default class UploadDemo extends React.Component {
   render() {
     const { isModalVisible, tagList, tagId, blogTitle } = this.state
 
+    console.log(tagId, ">>>>tagId")
+
     const excludeControls = [
       'letter-spacing',
       'line-height',
@@ -238,6 +241,7 @@ export default class UploadDemo extends React.Component {
 
             >
               {tagList.length && tagList.map((_tag, _tagIndex) => {
+
                 return <Option key={_tag.tagId} disabled={tagId.includes(_tag.tagId)}>{_tag.tagName}</Option>
               })}
             </Select>
