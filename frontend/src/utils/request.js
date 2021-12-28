@@ -37,13 +37,13 @@ const errorHandler = async (error) => {
 
     if (response && response.status) {
         if (response.status == 400) {
-            return history.push(loginPath);
+            history.push(loginPath);
         }
         else if (response.status == 401) {
             if (response.url.indexOf("/api/token/refresh") > -1) {
                 //refresh接口报401，重定向到登录页面
                 localStorage.clear()
-                return history.push(loginPath);
+                history.push(loginPath);
             }
         }
         else {
@@ -70,48 +70,49 @@ const request = extend({
 request.interceptors.request.use(async (url, options) => {
 
     let c_token = localStorage.getItem("access-token") || "";
-    if (c_token && c_token !== "undefined") {
-        let headers = {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-        };
-        if (options?.requestHeader) {
-            headers = { ...options.requestHeader }
-        } else {
-            headers = { ...headers, Authorization: `Bearer ${c_token}` }
-        }
-        if (["get", "GET"].includes(options.method)) {
-            return (
-                {
-                    url,
-                    options: { ...options, headers, params: { ...options.data } }
-                }
-            )
-        } else {
-            return (
-                {
-                    url,
-                    options: { ...options, headers },
-                }
-            );
-        }
-
-    } else {
-        return {
-            url,
-            options,
-        }
-    }
+    // if (c_token && c_token !== "undefined") {
 
 
-
-
-    // return (
-    //     {
+    // } else {
+    //     return {
     //         url,
     //         options,
     //     }
-    // );
+    // }
+
+
+
+
+    let headers = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+    };
+    if (options?.requestHeader) {
+        headers = { ...options.requestHeader }
+    } else {
+
+        headers = { ...headers }
+        if (c_token && c_token !== "undefined") {
+
+            headers = { ...headers, Authorization: `Bearer ${c_token}` }
+        }
+    }
+    if (["get", "GET"].includes(options.method)) {
+
+        return (
+            {
+                url,
+                options: { ...options, headers, params: { ...options.data } }
+            }
+        )
+    } else {
+        return (
+            {
+                url,
+                options: { ...options, headers },
+            }
+        );
+    }
 
 })
 

@@ -190,7 +190,7 @@ export async function deleteCommentById(param) {
 
 /**博客详情 GET /api/getBlogDetail*/
 export async function getBlogDetail(param) {
-  return httpReq(`/api/getBlogDetail`, param, "POST");
+  return httpReq(`/api/getBlogDetail`, param, "GET");
 }
 
 /**获取个人中心页面的数据【博客列表、权限拦截】POST /api/getPersonalCenter*/

@@ -43,8 +43,9 @@ export async function getInitialState() {
 
 
     } catch (error) {
+
       // localStorage.clear()
-      history.push(loginPath);
+      // history.push(loginPath);
     }
 
     // return undefined;
@@ -89,7 +90,7 @@ export const layout = ({ initialState }) => {
       const { location } = history; // 如果没有登录，重定向到 login
       //这段暂时注释掉
       if (!initialState?.currentUser && location.pathname.indexOf("/user") < 0) {
-        history.push(loginPath);
+        // history.push(loginPath);
         // localStorage.clear()
       }
     },

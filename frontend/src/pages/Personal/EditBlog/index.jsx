@@ -255,7 +255,6 @@ export default class UploadDemo extends React.Component {
           </div>
           <div className={style.rightContent}>
             <Button type="primary" style={{ width: 100, marginRight: 20 }} onClick={this.releaseArticle}>发布</Button>
-            <Avatar src={""} />
           </div>
         </header>
         <main>

@@ -97,7 +97,10 @@ export default (props) => {
                                                 setShowDeleteModal(true)
                                                 setDeleteInfo(item)
                                             }}>
-                                            {(currentUser.userId === userId || currentUser.userId === blogInfo.userId) ? " 删除" : ""}
+                                            {
+                                                currentUser?.userId ? <>{(currentUser.userId === userId || currentUser.userId === blogInfo.userId) ? " 删除" : ""}</> : <></>
+                                            }
+
                                         </div>
                                     ]
                             }
