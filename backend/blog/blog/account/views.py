@@ -2,7 +2,7 @@ import uuid
 import qiniu
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
-from rest_framework.authentication import BasicAuthentication
+from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.views.decorators.csrf import csrf_exempt
@@ -118,7 +118,8 @@ def delete_tag_by_id(request):
 
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
+# @authentication_classes([BasicAuthentication])
+# @permission_classes((AllowAny,))
 def get_tags(request):
     try:
         tag_list = Category.objects.all().order_by('id')
@@ -366,14 +367,18 @@ def cancel_fork(request):
     return Response({'businessCode': 1000, 'content': True})
 
 
-@api_view(['POST'])
-@permission_classes((AllowAny,))
+@api_view(['GET'])
+# @authentication_classes([BasicAuthentication, TokenAuthentication])
+# @permission_classes((AllowAny,))
 def get_blog_detail(request):
     try:
-        token = str(request.auth) or None
+        if request.auth:
+            token = str(request.auth)
+        else:
+            token = None
         if token:
             my_id = get_userid_from_token(token)
-        blog_id = request.data['blogId']
+        blog_id = request.query_params['blogId']
         blog = Articles.objects.get(pk=blog_id)
         blog = ArticleSerializer(blog).data
         author_id = blog['userId']  # name
@@ -462,7 +467,8 @@ def get_user_info(request):
 
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
+# @authentication_classes([BasicAuthentication, TokenAuthentication])
+# @permission_classes((AllowAny,))
 def get_category_menu(request):
     try:
         tags = Category.objects.all()
@@ -543,7 +549,7 @@ def get_personal_center(request):
             id = item['followerId']
             user = User.objects.get(id=id)
             user_serializer = UserSerializer(user).data
-            isForked = Follow.objects.filter(followedId=user_id).filter(followerId=id).count() > 0
+            isForked = Follow.objects.filter(followerId=user_id).filter(followedId=id).count() > 0
             return {
                 'username': user_serializer['username'],
                 'avatar': user_serializer['avatar'],
@@ -579,11 +585,13 @@ def get_personal_center(request):
 
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
+# @authentication_classes([BasicAuthentication, TokenAuthentication])
+# @permission_classes((AllowAny,))
 def get_other_info(request):
     try:
         user_id = request.query_params['userId']
         token = str(request.auth) or None
+        print(request.auth,token,'================')
         if token:
             my_id = get_userid_from_token(token)
 
@@ -615,7 +623,7 @@ def get_other_info(request):
         fork_number = Follow.objects.filter(followerId=user_id).count()
         follower_number = Follow.objects.filter(followedId=user_id).count()
         if token :
-            is_forked = Follow.objects.filter(followerId=my_id).filter(followedId=user_id).count >0
+            is_forked = Follow.objects.filter(followerId=my_id).filter(followedId=user_id).count() >0
         else:
             is_forked = False
         user_info = {
