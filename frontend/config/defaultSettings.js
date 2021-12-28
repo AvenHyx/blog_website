@@ -1,36 +1,18 @@
 const Settings = {
   navTheme: 'light',
   // 拂晓蓝
-  primaryColor: '#F5222D',
+  primaryColor: '#0e5fc9',
   layout: 'topmenu',
   contentWidth: 'Fixed',
-  fixedHeader: false,
+  fixedHeader: true,
   fixSiderbar: true,
   colorWeak: false,
-  title: 'Ant Design Pro',
+  title: '',
   pwa: false,
-  logo: 'https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg',
+  logo: 'http://img.aryazdp.cn/e698a23c511911ecbb94b46bfc50fb17',
   iconfontUrl: '',
   theme: "light",
   hideCopyButton: false,
   hideHintAlert: false
-  // "layout": "topmenu",
-  // "contentWidth": "Fixed",
-  // "theme": "light",
-  // "primaryColor": "#F5222D",
-  // "fixedHeader": false,
-  // "fixSiderbar": false,
-  // "hideHintAlert": false,
-  // "hideCopyButton": false
-  // {
-  //   "layout": "topmenu",
-  //   "contentWidth": "Fixed",
-  //   "theme": "light",
-  //   "primaryColor": "#F5222D",
-  //   "fixedHeader": false,
-  //   "fixSiderbar": false,
-  //   "hideHintAlert": false,
-  //   "hideCopyButton": false
-  // }
 };
 export default Settings;

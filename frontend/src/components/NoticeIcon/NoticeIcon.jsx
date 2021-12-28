@@ -8,6 +8,7 @@ import HeaderDropdown from '../HeaderDropdown';
 import styles from './index.less';
 const { TabPane } = Tabs;
 
+
 const NoticeIcon = (props) => {
   const getNotificationBox = () => {
     const {

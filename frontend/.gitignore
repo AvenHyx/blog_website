@@ -3,30 +3,30 @@
 # dependencies
 **/node_modules
 # roadhog-api-doc ignore
-/src/utils/request-temp.js
-_roadhog-api-doc
+# /src/utils/request-temp.js
+# _roadhog-api-doc
 
 # production
 /dist
 
 # misc
 .DS_Store
-npm-debug.log*
-yarn-error.log
+# npm-debug.log*
+# yarn-error.log
 
-/coverage
-.idea
-yarn.lock
-package-lock.json
-pnpm-lock.yaml
-*bak
+# /coverage
+# .idea
+# yarn.lock
+# package-lock.json
+# pnpm-lock.yaml
+# *bak
 
 
 # visual studio code
-.history
-*.log
-functions/*
-.temp/**
+# .history
+# *.log
+# functions/*
+# .temp/**
 
 # umi
 .umi
