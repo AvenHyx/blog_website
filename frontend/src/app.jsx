@@ -6,6 +6,7 @@ import *as apis from './services/ant-design-pro/api';
 import { BookOutlined, LinkOutlined } from '@ant-design/icons';
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
+
 /** 获取用户信息比较慢的时候会展示一个 loading */
 
 export const initialStateConfig = {
@@ -33,20 +34,18 @@ export async function getInitialState() {
   }
 
   const fetchUserInfo = async (values) => {
-
-    // values.password = "ccc"
     try {
       const Auth = await getAccessToken(values)
       if (Auth) {
         const msg = await apis.currentUser({});
-
         if (msg) return msg
       }
 
 
     } catch (error) {
-      console.log(error)
-      history.push(loginPath);
+
+      // localStorage.clear()
+      // history.push(loginPath);
     }
 
     // return undefined;
@@ -54,18 +53,20 @@ export async function getInitialState() {
 
 
   //这段代码暂时不执行
-  if (history.location.pathname !== loginPath) {
-    const msg = await apis.currentUser();
-    if (msg) {
-      return {
-        fetchUserInfo,
-        currentUser: msg,
-        settings: {},
-      };
-    } else {
+  if (history.location.pathname.indexOf("/user") < 0) {
+    let c_token = localStorage.getItem("access-token") || ""
+    if (c_token != "") {
+      const msg = await apis.currentUser({});
+      if (msg) {
+        return {
+          fetchUserInfo,
+          currentUser: msg,
+          settings: {},
+        };
+      } else {
 
+      }
     }
-
 
   }
 
@@ -78,7 +79,6 @@ export async function getInitialState() {
 } // ProLayout 支持的api https://procomponents.ant.design/components/layout
 
 export const layout = ({ initialState }) => {
-  console.log(initialState, initialState?.currentUser?.username, "user")
   return {
     rightContentRender: () => <RightContent />,
     disableContentMargin: false,
@@ -89,10 +89,9 @@ export const layout = ({ initialState }) => {
     onPageChange: () => {
       const { location } = history; // 如果没有登录，重定向到 login
       //这段暂时注释掉
-      if (!initialState?.currentUser && location.pathname !== loginPath) {
-        // alert(11)
-        console.log(initialState?.currentUser, ">>>>111")
-        history.push(loginPath);
+      if (!initialState?.currentUser && location.pathname.indexOf("/user") < 0) {
+        // history.push(loginPath);
+        // localStorage.clear()
       }
     },
 

@@ -49,9 +49,10 @@ export default () => {
         <BackTop>
             <Button type="primary" shape="circle" icon={<VerticalAlignTopOutlined />} size={'large'} />
         </BackTop>
+
         <div className={asideStyle}>
             {
-                categoryList.map((_item, _index) => {
+                categoryList.length && categoryList.map((_item, _index) => {
                     let { tagName } = _item
                     return <div key={_index} onClick={() => { handleTagClick(_index) }} className={cls([asideItem, currentIndex == _index ? active : null])}>{tagName}</div>
                 })

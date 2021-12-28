@@ -12,8 +12,9 @@ const Settings = () => {
   const menuMap = {
     base: '基本设置',
     security: '安全设置',
-    binding: '账号绑定',
-    notification: '新消息通知',
+    // 下一个版本迭代
+    // binding: '账号绑定',
+    // notification: '新消息通知',
   };
   const [initConfig, setInitConfig] = useState({
     mode: 'inline',

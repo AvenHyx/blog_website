@@ -4,7 +4,7 @@
  * 更详细的 api 文档: https://github.com/umijs/umi-request
  */
 import { extend } from 'umi-request';
-import { notification } from 'antd';
+import { notification, } from 'antd';
 import { history, Link } from 'umi';
 import * as apis from '@/services/ant-design-pro/api'
 const loginPath = '/user/login';
@@ -34,26 +34,19 @@ const codeMessage = {
  */
 const errorHandler = async (error) => {
     const { response } = error;
+
     if (response && response.status) {
-        if (response.status == "401") {
-            //重新刷新refresh
-            try {
-                let res = await apis.refreshToken({
-                    refresh: localStorage.getItem("refresh-token")
-                })
-                if (res.hasOwnProperty("access")) {
-                    let { access, refresh } = res
-                    localStorage.setItem("access-token", access)
-                    localStorage.setItem("refresh-token", refresh)
-                    await apis.currentUser()
-                }
-
-
-            } catch (error) {
-                console.log("401", error)
+        if (response.status == 400) {
+            history.push(loginPath);
+        }
+        else if (response.status == 401) {
+            if (response.url.indexOf("/api/token/refresh") > -1) {
+                //refresh接口报401，重定向到登录页面
+                localStorage.clear()
                 history.push(loginPath);
             }
-        } else {
+        }
+        else {
             const errorText = codeMessage[response.status] || response.statusText;
             const { status, url } = response;
             notification.error({
@@ -75,37 +68,51 @@ const request = extend({
 
 // request拦截器, 改变url 或 options.
 request.interceptors.request.use(async (url, options) => {
+
     let c_token = localStorage.getItem("access-token") || "";
-    if (c_token && c_token !== "undefined") {
-        const headers = {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            Authorization: `Bearer ${c_token}`
-        };
+    // if (c_token && c_token !== "undefined") {
 
-        if (["get", "GET"].includes(options.method)) {
-            return (
-                {
-                    url,
-                    options: { ...options, headers, params: { ...options.data } }
-                }
-            )
-        } else {
-            return (
-                {
-                    url,
-                    options: { ...options, headers },
-                }
-            );
+
+    // } else {
+    //     return {
+    //         url,
+    //         options,
+    //     }
+    // }
+
+
+
+
+    let headers = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+    };
+    if (options?.requestHeader) {
+        headers = { ...options.requestHeader }
+    } else {
+
+        headers = { ...headers }
+        if (c_token && c_token !== "undefined") {
+
+            headers = { ...headers, Authorization: `Bearer ${c_token}` }
         }
-
     }
-    return (
-        {
-            url,
-            options,
-        }
-    );
+    if (["get", "GET"].includes(options.method)) {
+
+        return (
+            {
+                url,
+                options: { ...options, headers, params: { ...options.data } }
+            }
+        )
+    } else {
+        return (
+            {
+                url,
+                options: { ...options, headers },
+            }
+        );
+    }
 
 })
 

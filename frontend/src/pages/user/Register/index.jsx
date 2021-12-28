@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Form, Button, Col, Input, Popover, Progress, Row, Select, message } from 'antd';
+import { Form, Button, Col, Input, Popover, Progress, Row, Select, message, Upload } from 'antd';
 import { Link, useRequest, history } from 'umi';
-import { fakeRegister } from './service';
 import styles from './style.less';
+import { PlusOutlined, UploadOutlined } from '@ant-design/icons'
+import * as apis from '@/services/ant-design-pro/api'
+// import UploadAvatar from '@/components/UploadAvatar'
+
+
 const FormItem = Form.Item;
 const { Option } = Select;
 const InputGroup = Input.Group;
@@ -34,6 +38,8 @@ const Register = () => {
   const [visible, setVisible] = useState(false);
   const [prefix, setPrefix] = useState('86');
   const [popover, setPopover] = useState(false);
+
+  const [imageUrl, setImageUrl] = useState("")  //头像url
   const confirmDirty = false;
   let interval;
   const [form] = Form.useForm();
@@ -71,23 +77,39 @@ const Register = () => {
     return 'poor';
   };
 
-  const { loading: submitting, run: register } = useRequest(fakeRegister, {
-    manual: true,
-    onSuccess: (data, params) => {
-      if (data.status === 'ok') {
-        message.success('注册成功！');
-        history.push({
-          pathname: '/user/register-result',
-          state: {
-            account: params.email,
-          },
-        });
-      }
-    },
-  });
 
-  const onFinish = (values) => {
-    register(values);
+  /**
+   * @desc 处理图片上传
+   * @param {*} content 上传的内容
+   */
+  // const uploadHandler = (content) => {
+  //   let { file: { response } } = content
+  // }
+
+
+  /**
+   * 提交注册信息
+   * @param {*} values  form info
+   */
+  const onFinish = async (values) => {
+    if (values?.avatar) {
+      values.avatar = imageUrl
+    }
+
+    let res = await apis.register(values)
+    if (res) {
+      message.success('注册成功！');
+      history.push({
+        pathname: '/user/register-result',
+        state: {
+          account: values.email,
+        },
+      });
+    } else {
+      message.error('该账号已存在！');
+    }
+
+    // register(values);
   };
 
   const checkConfirm = (_, value) => {
@@ -145,10 +167,34 @@ const Register = () => {
     ) : null;
   };
 
+
+  /**
+   * @desc  normFile
+   * @param {*} e  event
+   * @returns 
+   */
+  const normFile = (e) => {
+    console.log('Upload event:', e);
+    if (Array.isArray(e)) {
+      return e;
+    }
+
+    let { file: { response, status } } = e
+    if (status === "done") {
+      if (response?.businessCode * 1 === 1000) {
+        setImageUrl(response.content)
+      }
+      console.log(response)
+    }
+    return e && e.fileList;
+  };
+
+
   return (
     <div className={styles.main}>
       <h3>注册</h3>
       <Form form={form} name="UserRegister" onFinish={onFinish}>
+        {/* 用户名 */}
         <Row gutter={8}>
           <Col span={5}><FormItem label={"用户名"}></FormItem></Col>
           <Col span={19}><FormItem
@@ -167,31 +213,12 @@ const Register = () => {
             <Input size="large" placeholder="用户名" />
           </FormItem></Col>
         </Row>
-        <Row gutter={8}>
-          <Col span={5}><FormItem label={"邮箱"}></FormItem></Col>
-          <Col span={19}><FormItem
-            name="mail"
-            rules={[
-              {
-                required: true,
-                message: '请输入邮箱地址!',
-              },
-              {
-                type: 'email',
-                message: '邮箱地址格式错误!',
-              },
-            ]}
-          >
-            <Input size="large" placeholder="邮箱" />
-          </FormItem>
-          </Col>
-        </Row>
+        {/* 密码 */}
         <Row gutter={8}>
           <Col span={5}><FormItem label={"密码"}></FormItem></Col>
           <Col span={19}><Popover
             getPopupContainer={(node) => {
               if (node && node.parentNode) {
-                alert(22)
                 return node.parentNode;
               }
 
@@ -240,6 +267,7 @@ const Register = () => {
           </Popover></Col>
         </Row>
 
+        {/* 确认密码 */}
         <Row gutter={8}>
           <Col span={5}><FormItem label={"确认密码"}></FormItem></Col>
           <Col span={19}><FormItem
@@ -256,6 +284,72 @@ const Register = () => {
           >
             <Input size="large" type="password" placeholder="确认密码" />
           </FormItem></Col>
+        </Row>
+        {/* 邮箱 */}
+        <Row gutter={8}>
+          <Col span={5}><FormItem label={"邮箱"}></FormItem></Col>
+          <Col span={19}><FormItem
+            name="email"
+            rules={[
+              {
+                required: true,
+                message: '请输入邮箱地址!',
+              },
+              {
+                type: 'email',
+                message: '邮箱地址格式错误!',
+              },
+            ]}
+          >
+            <Input size="large" placeholder="邮箱" />
+          </FormItem>
+          </Col>
+        </Row>
+        {/* 头像 */}
+        <Row gutter={8}>
+          <Col span={5}><FormItem label={"头像"}></FormItem></Col>
+          <Col span={19}>
+            <Form.Item
+              name="avatar"
+              valuePropName="fileList"
+              getValueFromEvent={normFile}
+            >
+              <Upload
+                onRemove={() => {
+                  setImageUrl("")
+                }}
+                showUploadList={{
+                  showPreviewIcon: false,
+                  showDownloadIcon: false
+                }}
+                name="file"
+                action="/api/upload/avatar"
+                listType="picture-card">
+                {imageUrl ? "" : <PlusOutlined />}
+              </Upload>
+            </Form.Item>
+
+            {/* <FormItem
+              name="avatar"
+
+            >
+              <Upload
+                accept="image/*"
+                showUploadList={false}
+                action="/api/upload/avatar"
+                onChange={(files) => {
+                  let file = files.file
+                  if (file?.status == "done" && file?.response?.businessCode == 1000) {
+                    uploadHandler(file.response.content)
+                  }
+                }}
+              >
+                <button type="button" className="control-item button upload-button" data-title="插入图片">
+                  <PlusOutlined />
+                </button>
+              </Upload>
+            </FormItem> */}
+          </Col>
         </Row>
 
         <InputGroup compact>
@@ -274,7 +368,7 @@ const Register = () => {
             style={{
               width: '80%',
             }}
-            name="mobile"
+            name="phone"
             rules={[
               {
                 required: true,
@@ -290,8 +384,8 @@ const Register = () => {
           </FormItem>
         </InputGroup>
 
-
-        <Row gutter={8}>
+        {/* 获取验证码第一版不做 */}
+        {/* <Row gutter={8}>
           <Col span={16}>
             <FormItem
               name="captcha"
@@ -315,11 +409,11 @@ const Register = () => {
               {count ? `${count} s` : '获取验证码'}
             </Button>
           </Col>
-        </Row>
+        </Row> */}
         <FormItem>
           <Button
             size="large"
-            loading={submitting}
+            // loading={submitting}
             className={styles.submit}
             type="primary"
             htmlType="submit"
@@ -331,7 +425,7 @@ const Register = () => {
           </Link>
         </FormItem>
       </Form>
-    </div>
+    </div >
   );
 };
 

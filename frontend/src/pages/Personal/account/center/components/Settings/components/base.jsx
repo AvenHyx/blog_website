@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { UploadOutlined } from '@ant-design/icons';
 import { Button, Input, Upload, message } from 'antd';
 import ProForm, {
@@ -8,106 +8,112 @@ import ProForm, {
   ProFormText,
   ProFormTextArea,
 } from '@ant-design/pro-form';
-import { useRequest } from 'umi';
+import { useRequest, useModel } from 'umi';
 import { queryCurrent } from '../service';
 import { queryProvince, queryCity } from '../service';
 import styles from './BaseView.less';
+import { defaultImg } from '@/utils/utils';
+import * as apis from '@/services/ant-design-pro/api'
 
-const validatorPhone = (rule, value, callback) => {
-  if (!value[0]) {
-    callback('Please input your area code!');
-  }
-
-  if (!value[1]) {
-    callback('Please input your phone number!');
-  }
-
-  callback();
-}; // 头像组件 方便以后独立，增加裁剪之类的功能
-
-const AvatarView = ({ avatar }) => (
-  <>
-    <div className={styles.avatar_title}>头像</div>
-    <div className={styles.avatar}>
-      <img src={avatar} alt="avatar" />
-    </div>
-    <Upload showUploadList={false}>
-      <div className={styles.button_view}>
-        <Button>
-          <UploadOutlined />
-          更换头像
-        </Button>
-      </div>
-    </Upload>
-  </>
-);
 
 const BaseView = () => {
-  const { data: currentUser, loading } = useRequest(() => {
-    return queryCurrent();
-  });
+  const { initialState, setInitialState } = useModel("@@initialState")
+  const { currentUser, currentUser: { avatar } } = initialState
+  const [userAvatar, setAvatar] = useState(avatar || defaultImg)
+  /**此处代码留到后面学习 */
+  // const { data: currentUser, loading } = useRequest(() => {
+  //   return queryCurrent();
+  // });
 
-  const getAvatarURL = () => {
-    if (currentUser) {
-      if (currentUser.avatar) {
-        return currentUser.avatar;
-      }
+  // 头像组件 方便以后独立，增加裁剪之类的功能
+  const AvatarView = ({ avatar }) => (
+    <>
+      <div className={styles.avatar_title}>头像</div>
+      <div className={styles.avatar}>
+        <img src={avatar} alt="avatar" />
+      </div>
+      <Upload
+        onChange={handleChange}
+        showUploadList={false}
+        action={"/api/upload/avatar"}>
+        <div className={styles.button_view}>
+          <Button>
+            <UploadOutlined />
+            更换头像
+          </Button>
+        </div>
+      </Upload>
+    </>
+  );
 
-      const url = 'https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png';
-      return url;
+  const handleChange = (info) => {
+    let { file: { status, response } } = info
+    if (status === "done") {
+      if (response?.businessCode * 1 === 1000) return setAvatar(response.content)
     }
+  }
 
-    return '';
-  };
+  /**
+   * @desc 提交更新信息
+   * @param {*} values 
+   */
 
-  const handleFinish = async () => {
-    message.success('更新基本信息成功');
+  const handleFinish = async (values) => {
+
+    let res = await apis.modifyUserInfo({ ...values, userName: values?.username, avatar: userAvatar })
+    if (res) {
+      message.success('更新基本信息成功');
+      let result = await apis.currentUser({})
+      if (result) {
+        setInitialState((s) => ({ ...s, currentUser: result }));
+      }
+    }
   };
 
   return (
     <div className={styles.baseView}>
-      {loading ? null : (
-        <>
-          <div className={styles.left}>
-            <ProForm
-              layout="vertical"
-              onFinish={handleFinish}
-              submitter={{
-                resetButtonProps: {
-                  style: {
-                    display: 'none',
-                  },
+      <>
+        <div className={styles.left}>
+          <ProForm
+            layout="vertical"
+            onFinish={handleFinish}
+            submitter={{
+              resetButtonProps: {
+                style: {
+                  display: 'none',
                 },
-                submitButtonProps: {
-                  children: '更新基本信息',
+              },
+              submitButtonProps: {
+                children: '更新基本信息',
+              },
+            }}
+            initialValues={{ ...currentUser }}
+            // initialValues={{ ...currentUser, mobile: currentUser?.mobile }}
+            hideRequiredMark
+          >
+            <ProFormText
+              width="md"
+              name="email"
+              label="邮箱"
+              rules={[
+                {
+                  required: true,
+                  message: '请输入您的邮箱!',
                 },
-              }}
-              initialValues={{ ...currentUser, phone: currentUser?.phone.split('-') }}
-              hideRequiredMark
-            >
-              <ProFormText
-                width="md"
-                name="email"
-                label="邮箱"
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入您的邮箱!',
-                  },
-                ]}
-              />
-              <ProFormText
-                width="md"
-                name="name"
-                label="昵称"
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入您的昵称!',
-                  },
-                ]}
-              />
-              <ProFormTextArea
+              ]}
+            />
+            <ProFormText
+              width="md"
+              name="username"
+              label="昵称"
+              rules={[
+                {
+                  required: true,
+                  message: '请输入您的昵称!',
+                },
+              ]}
+            />
+            {/* <ProFormTextArea
                 name="profile"
                 label="个人简介"
                 rules={[
@@ -117,8 +123,8 @@ const BaseView = () => {
                   },
                 ]}
                 placeholder="个人简介"
-              />
-              <ProFormSelect
+              /> */}
+            {/* <ProFormSelect
                 width="sm"
                 name="country"
                 label="国家/地区"
@@ -134,8 +140,8 @@ const BaseView = () => {
                     value: 'China',
                   },
                 ]}
-              />
-
+              /> */}
+            {/* 
               <ProForm.Group title="所在省市" size={8}>
                 <ProFormSelect
                   rules={[
@@ -196,8 +202,8 @@ const BaseView = () => {
                     );
                   }}
                 </ProFormDependency>
-              </ProForm.Group>
-              <ProFormText
+              </ProForm.Group> */}
+            {/* <ProFormText
                 width="md"
                 name="address"
                 label="街道地址"
@@ -207,30 +213,33 @@ const BaseView = () => {
                     message: '请输入您的街道地址!',
                   },
                 ]}
-              />
-              <ProFormFieldSet
-                name="phone"
-                label="联系电话"
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入您的联系电话!',
-                  },
-                  {
-                    validator: validatorPhone,
-                  },
-                ]}
-              >
-                <Input className={styles.area_code} />
-                <Input className={styles.phone_number} />
-              </ProFormFieldSet>
-            </ProForm>
-          </div>
-          <div className={styles.right}>
-            <AvatarView avatar={getAvatarURL()} />
-          </div>
-        </>
-      )}
+              /> */}
+            <ProFormText
+              name="mobile"
+              label="联系电话"
+              // valuePropName="mobile"
+              rules={[
+                {
+                  required: true,
+                  message: '请输入您的联系电话!',
+                },
+                {
+                  pattern: /^\d{11}$/,
+                  message: '手机号格式错误!',
+                },
+                // {
+                //   validator: validatorPhone,
+                // },
+              ]}
+            />
+            {/* <Input className={styles.phone_number} />
+            </ProFormText> */}
+          </ProForm>
+        </div>
+        <div className={styles.right}>
+          <AvatarView avatar={userAvatar} />
+        </div>
+      </>
     </div>
   );
 };

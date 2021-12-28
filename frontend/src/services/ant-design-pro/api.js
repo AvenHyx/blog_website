@@ -4,31 +4,87 @@
 // import { request } from 'umi';
 
 import request from "@/utils/request";
+import { Modal, Button, Space } from 'antd';
+import Login from "@/pages/user/Login";
+import { history } from 'umi';
+const loginPath = '/user/login';
+
+
+
 
 /**处理http请求 */
-const httpReq = async (url, param, method, requestHeader) => {
-  const response = await request(url, {
-    method,
-    data: param,
-    requestHeader
-  })
+const httpReq = async (url, param, method, requestHeader = "") => {
 
-  if (response) {
-    if (response.hasOwnProperty("businessCode")) {
-      let { businessCode } = response
-      if (businessCode * 1 === 1000) {
-        return response?.content
-      }
-    } else {
-      return response
-    }
-    // console.log(response.hasOwnProperty("businessCode") ? (response?.businessCode * 1 === 1000) ? response.content : null : response)
-    // return response?.content
+  if (((param ?? "") != "") && Object.keys(param).length && param.hasOwnProperty("isNeedLogin")) {
+    Modal.warning({
+      okText: "去登录",
+      closable: true,
+      onOk: () => { history.push('/user/login') },
+      title: '您还未登录，快去登录吧~',
+    })
   } else {
-    // return {
-    //   errorCode: response.businessCode
-    // }
+    let result = await request(url, {
+      method,
+      data: param,
+      requestHeader
+    })
+
+    if (result) {
+      if (result.hasOwnProperty("businessCode")) {
+        let { businessCode } = result
+        if (businessCode * 1 === 1000) {
+          return result?.content
+        }
+      } else {
+
+        if (result.status == 400) {
+          history.push(loginPath);
+        } else if (result.status == 401) {
+
+          if (url.indexOf("/api/token/refresh") > -1) {
+            localStorage.clear()
+            history.push(loginPath)
+          } else {
+
+            const refreshRes = await refreshToken({
+              refresh: localStorage.getItem("refresh-token")
+            })
+
+            if (refreshRes && refreshRes.hasOwnProperty("access")) {
+              let { access, refresh } = refreshRes
+              localStorage.setItem("access-token", access)
+              localStorage.setItem("refresh-token", refresh)
+
+              let res = await request(url, {
+                method,
+                data: param,
+                requestHeader: {
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                  Authorization: `Bearer ${access}`
+                }
+              })
+              return res?.content;
+            }
+          }
+        }
+        else {
+          return result
+        }
+      }
+
+    } else {
+
+      console.log(result, ">>>>result")
+      // if (url.indexOf("/api/token/refresh")) {
+      //   localStorage.clear()
+      //   history.push(loginPath)
+      //   return null
+      // }
+      // console.log("await response ", result)
+    }
   }
+
 }
 
 
@@ -48,12 +104,23 @@ export async function login(param) {
 
 /** 获取当前的用户 GET /api/currentUser */
 export async function currentUser(param) {
+  let c_token = localStorage.getItem("access-token") || "";
+  // alert(11)
+  let headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    // Authorization: `Bearer ${c_token}`,
+  };
   return httpReq(`/api/getUserInfo`, param, "POST");
 }
 
 /**getToken POST */
 export async function getToken(param) {
-  return httpReq(`/api/token`, param, "POST");
+
+  return httpReq(`/api/token`, param, "POST", {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  });
 }
 
 /**换取token  POST /api/refresh/token*/
@@ -123,7 +190,7 @@ export async function deleteCommentById(param) {
 
 /**博客详情 GET /api/getBlogDetail*/
 export async function getBlogDetail(param) {
-  return httpReq(`/api/getBlogDetail`, param, "POST");
+  return httpReq(`/api/getBlogDetail`, param, "GET");
 }
 
 /**获取个人中心页面的数据【博客列表、权限拦截】POST /api/getPersonalCenter*/
