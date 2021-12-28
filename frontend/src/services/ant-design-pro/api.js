@@ -75,7 +75,6 @@ const httpReq = async (url, param, method, requestHeader = "") => {
 
     } else {
 
-      console.log(result, ">>>>result")
       // if (url.indexOf("/api/token/refresh")) {
       //   localStorage.clear()
       //   history.push(loginPath)

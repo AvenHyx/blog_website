@@ -6,10 +6,10 @@
 import { extend } from 'umi-request';
 import { notification, } from 'antd';
 import { history, Link } from 'umi';
-import * as apis from '@/services/ant-design-pro/api'
+import configs from '../../config/env'
+
 const loginPath = '/user/login';
-// import *as apis from './services/ant-design-pro/api';
-// import 
+const api = "http://aryazdp.cn"
 
 const codeMessage = {
     200: '服务器成功返回请求的数据。',
@@ -69,6 +69,8 @@ const request = extend({
 // request拦截器, 改变url 或 options.
 request.interceptors.request.use(async (url, options) => {
 
+
+    url = configs[process.env.NODE_ENV].API_SERVER + url
     let c_token = localStorage.getItem("access-token") || "";
     // if (c_token && c_token !== "undefined") {
 

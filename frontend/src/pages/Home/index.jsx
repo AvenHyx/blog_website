@@ -52,10 +52,10 @@ export default () => {
 
         <div className={asideStyle}>
             {
-                categoryList.length && categoryList.map((_item, _index) => {
+                categoryList.length ? categoryList.map((_item, _index) => {
                     let { tagName } = _item
                     return <div key={_index} onClick={() => { handleTagClick(_index) }} className={cls([asideItem, currentIndex == _index ? active : null])}>{tagName}</div>
-                })
+                }) : null
             }
         </div>
         <div className={rightContent}>

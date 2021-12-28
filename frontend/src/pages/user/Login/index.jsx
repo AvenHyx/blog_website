@@ -55,7 +55,7 @@ const Login = () => {
       // 登录
       const msg = await login({ ...values, type });
 
-      if (msg) {
+      if ((msg ?? "") !== "") {
         const defaultLoginSuccessMessage = intl.formatMessage({
           id: 'pages.login.success',
           defaultMessage: '登录成功！',
@@ -67,16 +67,23 @@ const Login = () => {
         message.success(defaultLoginSuccessMessage);
         /** 此方法会跳转到 redirect 参数所在的位置 */
 
+        setUserLoginState(msg);
+
+
         if (!history) return;
         const { query } = history.location;
         const { redirect } = query;
         history.push(redirect || '/');
         return;
+      } else {
+        // 登录失败
+        const defaultLoginFailureMessage = intl.formatMessage({
+          id: 'pages.login.failure',
+          defaultMessage: '密码错误，请重试！',
+        });
+        message.error(defaultLoginFailureMessage);
       }
 
-      console.log(msg); // 如果失败去设置用户错误信息
-
-      setUserLoginState(msg);
     } catch (error) {
       const defaultLoginFailureMessage = intl.formatMessage({
         id: 'pages.login.failure',
@@ -159,7 +166,7 @@ const Login = () => {
                 }}
                 placeholder={intl.formatMessage({
                   id: 'pages.login.username.placeholder',
-                  defaultMessage: '用户名: admin or user',
+                  defaultMessage: '用户名',
                 })}
                 rules={[
                   {
@@ -181,7 +188,7 @@ const Login = () => {
                 }}
                 placeholder={intl.formatMessage({
                   id: 'pages.login.password.placeholder',
-                  defaultMessage: '密码: ant.design',
+                  defaultMessage: '密码',
                 })}
                 rules={[
                   {

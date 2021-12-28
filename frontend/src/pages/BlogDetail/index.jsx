@@ -55,7 +55,6 @@ export default (props) => {
 
     /**处理回复 */
     const handleReply = (item) => {
-        console.log(item, ">>>item")
         setReply(item)
         setShowReply(true)
     }

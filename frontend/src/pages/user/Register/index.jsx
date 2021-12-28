@@ -174,7 +174,6 @@ const Register = () => {
    * @returns 
    */
   const normFile = (e) => {
-    console.log('Upload event:', e);
     if (Array.isArray(e)) {
       return e;
     }
@@ -184,7 +183,6 @@ const Register = () => {
       if (response?.businessCode * 1 === 1000) {
         setImageUrl(response.content)
       }
-      console.log(response)
     }
     return e && e.fileList;
   };

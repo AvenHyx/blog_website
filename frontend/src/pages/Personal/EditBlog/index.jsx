@@ -25,6 +25,8 @@ export default class UploadDemo extends React.Component {
       blogTitle: "",//文章标题
       blogId: (getUrlQuery("id") ?? "" != "") ? getUrlQuery("id") : ""
     }
+
+    this.editorRef = React.createRef()
   }
 
 
@@ -38,8 +40,9 @@ export default class UploadDemo extends React.Component {
     await apis.mapBlogById({ blogId: this.state.blogId }).then(res => {
       let { blogId, blogContent, blogTitle, tagId } = res
       this.setState({
-        // tagId: tagId ?? "" !== "" ? tagId : "",
+        // tagId: (tagId ?? "") !== "" ? tagId : "",
         tagId: [tagId],
+        previewTagId: [tagId],
         blogTitle,
         editorState: BraftEditor.createEditorState(blogContent)
       })
@@ -86,7 +89,18 @@ export default class UploadDemo extends React.Component {
     }
     try {
       await apis.getTags({}).then(res => {
-        if (res ?? "" !== "") {
+
+        if ((res ?? "") !== "") {
+
+          let { tagId } = this.state
+
+          if (tagId.length) {
+            let tagName = res.filter(_item => _item.tagId === tagId[0])[0]?.tagName || []
+            this.setState({
+              tagName
+            })
+          }
+          //aryazdp.cn
           this.setState({
             tagList: res,
           })
@@ -108,7 +122,8 @@ export default class UploadDemo extends React.Component {
    * @param {*} bool 
    */
   handleBlogModal = async (bool) => {
-    let { tagId, blogTitle, editorState, blogId } = this.state
+    let { tagId, blogTitle, editorState, blogId, previewTagId } = this.state
+
     if (bool == true) {
       //判断是否有勾选标签，如果否，则提示
       if (!tagId.length) return message.error("请选择文章标签", 2)
@@ -116,7 +131,7 @@ export default class UploadDemo extends React.Component {
       let param = {
         blogTitle,
         blogContent: editorState.toHTML(),
-        tagId,
+        tagId: Array.isArray(tagId) ? tagId[0] : tagId
       }
       //如果是编辑博客，请求加上博客id
       param = blogId ? { ...param, blogId } : param
@@ -144,8 +159,10 @@ export default class UploadDemo extends React.Component {
       }
 
     } else {
+
       this.setState({
-        isModalVisible: false
+        isModalVisible: false,
+        tagId: previewTagId
       })
     }
   }
@@ -155,9 +172,10 @@ export default class UploadDemo extends React.Component {
    * 选择标签【暂时只支持单选，不支持多选】
    */
   handleChangeTagSelect = (value) => {
+
     this.setState({
       // tagId: value,  //支持多选
-      tagId: value[0]  //支持单选
+      tagId: value.length ? value[0] : [] //支持单选
     })
   }
 
@@ -173,10 +191,7 @@ export default class UploadDemo extends React.Component {
 
 
   render() {
-    const { isModalVisible, tagList, tagId, blogTitle } = this.state
-
-    console.log(tagId, ">>>>tagId")
-
+    const { isModalVisible, tagList, tagId, blogTitle, tagName } = this.state
     const excludeControls = [
       'letter-spacing',
       'line-height',
@@ -222,18 +237,20 @@ export default class UploadDemo extends React.Component {
           handleOk={() => this.handleBlogModal(true)}
           handleCancel={() => this.handleBlogModal(false)}
           modalTitle="发布博文"
+          destroyOnClose
         >
+
           <Form.Item
             label="文章标签"
             name="文章标签"
-            initialValues=""
+            initialvalues=""
           // rules={[{ required: true, message: '请选择文章标签' }]}
           >
             <Select
               mode="multiple"
               size={"large"}
               placeholder="请选择标签"
-              defaultValue={[]}
+              defaultValue={[tagName] || []}
               onChange={this.handleChangeTagSelect}
               style={{ width: '100%' }}
               maxTagCount={5}
@@ -242,7 +259,9 @@ export default class UploadDemo extends React.Component {
             >
               {tagList.length && tagList.map((_tag, _tagIndex) => {
 
-                return <Option key={_tag.tagId} disabled={tagId.includes(_tag.tagId)}>{_tag.tagName}</Option>
+                return <Option key={_tag.tagId}
+                // disabled={tagId.includes(_tag.tagId)}
+                >{_tag.tagName}</Option>
               })}
             </Select>
           </Form.Item>
@@ -262,6 +281,7 @@ export default class UploadDemo extends React.Component {
             <div className={style.edit}
             >
               <BraftEditor
+                ref={this.editorRef}
                 value={this.state.editorState}
                 onChange={this.handleChange}
                 extendControls={extendControls}

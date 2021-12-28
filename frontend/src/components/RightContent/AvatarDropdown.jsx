@@ -102,7 +102,6 @@ const AvatarDropdown = ({ menu }) => {
     </Menu>
   );
 
-  console.log(currentUser.username, ">>>>currentUser.username")
   return (
     <HeaderDropdown overlay={menuHeaderDropdown}>
       <span className={`${styles.action} ${styles.account}`}>
